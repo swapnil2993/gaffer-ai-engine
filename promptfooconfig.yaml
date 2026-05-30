@@ -1,0 +1,20 @@
+# Promptfoo configuration for ScoutIntel-RAG evaluation
+prompts:
+  - "Act as an expert Sporting Director. Evaluate the following scouting data: {{context}}. Tactical Requirement: {{query}}"
+
+providers:
+  - id: openai:gpt-4o
+    config:
+      temperature: 0.2
+
+tests:
+  - vars:
+      query: "Analyze the player's performance in high-pressing scenarios."
+      context: "Player X showed 90% pass accuracy under pressure in the 2024/2025 season."
+    assert:
+      - type: contains
+        value: "high-pressing"
+      - type: javascript
+        value: "output.length > 50"
+      - type: answer-relevance
+        threshold: 0.8
