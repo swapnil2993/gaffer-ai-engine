@@ -96,7 +96,7 @@ Type coercion (CSV strings → floats) prevents calculation errors. Backup origi
 
 ## Modular Architecture
 
-The pipeline is organized into **7 reusable modules**:
+The pipeline is organized into **9 reusable modules**:
 
 ```
 backend/scripts/data_cleaning/
@@ -106,8 +106,9 @@ backend/scripts/data_cleaning/
 ├── defensive_stats.py       # Add estimated stats
 ├── wage_assignment.py       # Infer missing wages
 ├── data_transformer.py      # Convert stats → prose
+├── career_aggregation.py    # 3-year career profiles (enhancements)
 ├── privacy_handler.py       # Scrub PII
-└── pipeline.py              # Orchestrator
+└── pipeline.py              # Orchestrator (data cleaning steps)
 ```
 
 ### Module Interdependencies

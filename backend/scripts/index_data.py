@@ -1,8 +1,7 @@
-import json
 import os
 import re
 import sys
-from typing import Dict, List
+from typing import List
 
 import pandas as pd
 import yaml
@@ -10,7 +9,7 @@ import yaml
 # Ensure backend is in the python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "../..")))
 
-from backend.app.career_aggregation import (
+from backend.scripts.data_cleaning.career_aggregation import (
     aggregate_player_seasons,
     describe_career_aggregate,
 )
@@ -21,11 +20,10 @@ from backend.app.database import (
     insert_player_stat,
     insert_theory_chunk,
 )
-from backend.app.llm import get_instructor_client
 from backend.app.parser import chunk_tactical_book
 from backend.app.query_understanding import classify_tactical_concept
 from backend.app.schemas import TacticalTheoryPayload
-from backend.scripts.data_cleaning.common import num, per90, pct, position_phrase
+from backend.scripts.data_cleaning.common import num, pct
 from backend.scripts.data_cleaning.data_transformer import (
     describe_outfield_player,
     describe_2023_24_player,

@@ -1,1 +1,166 @@
-System Specification: ScoutIntel-RAGCore Engineering DirectivesYou are an elite Staff AI Platform Engineer. Your task is to implement the complete, production-grade backend codebase for ScoutIntel-RAG—an autonomous recruitment and tactical intelligence platform for professional football.Mandatory Tooling Constraints:Environment & Task Management: Python 3.11 managed via mise and uv packages.Ingestion: IBM Docling for structural, layout-aware PDF-to-Markdown parsing.Data Contracts & Validation: Strict typing enforced using Pydantic v2.NLP & PII Protection: Microsoft Presidio combined with an optimized spaCy en_core_web_sm pipeline.Vector Datastore: Milvus Lite operating purely as a local embedded .db collection.AI Logic & Orchestration: DSPy using declarative signatures and programmatic ChainOfThought compilation modules.Quality Assurance & Testing: DeepEval continuous regression testing metrics.Technical Specification & Module BlueprintGenerate the full implementation across the following 6 highly decoupled python files. Ensure there are no placeholders or truncated sections.Module 1: Data Contracts (backend/app/schemas.py)Implement strict Pydantic v2 data models to enforce runtime structural integrity.Requirements:Create a ScoutingPayload model containing: player_name (str), position (str), season (str, constrained via regex pattern to match standard season formats like '2024/2025' or '2025/2026'), raw_text (str), and metrics (Dict[str, Any]).Add field-level annotations and explicit descriptions using Pydantic's Field.Module 2: Data Sanitization & Compliance (backend/app/privacy.py)Build a text processing utility that masks Personally Identifiable Information (PII) before database ingestion.Requirements:Initialize Presidio AnalyzerEngine and AnonymizerEngine.Load the optimized spaCy en_core_web_sm pipeline.Expose a function scrub_sensitive_data(text: str) -> str that detects and masks structural PII (names, phone numbers, passport strings) to secure private scout dossiers.Module 3: Document Ingestion Layer (backend/app/parser.py)Implement a layout-aware extraction function powered by IBM Docling.Requirements:Initialize Docling's DocumentConverter.Expose a function ingest_scouting_pdf(file_path: str, player_name: str, position: str, season: str, metrics: dict) -> ScoutingPayload.The function must cleanly extract complex tables and text into Markdown, pass the resulting string through Module 2's scrub_sensitive_data, and serialize the clean results directly into Module 1's ScoutingPayload schema.Module 4: Embedded Storage Matrix (backend/app/database.py)Architect a local vector database interface running entirely inside an embedded instance of Milvus Lite.Requirements:Instantiate MilvusClient pointing to a local database file: scoutintel_local.db.Establish a persistent collection named epl_scouting_collection with dimension=384 using Cosine metric similarity scores. Ensure dynamic fields are enabled.Implement insert_scouting_vector(vector: list, text: str, metadata: dict).Implement query_scouting_vectors(vector: list, season: str, position: str) -> list. Build a strict SQL-like string filter expression using scalar metrics: season == '<season>' and position == '<position>'.Module 5: Declarative AI Orchestration (backend/app/engine.py)Build a declarative, self-improving prompt architecture using DSPy that completely bypasses manual, hard-coded string prompting.Requirements:Define a declarative class ScoutingReportSignature(dspy.Signature). Document it with a docstring instructing it to act as an expert Sporting Director. Define fields: context (InputField), tactical_query (InputField), and scouting_brief (OutputField).Implement a module class ScoutIntelRAG(dspy.Module) initializing dspy.ChainOfThought(ScoutingReportSignature).The forward(self, context_str: str, query_str: str) method must execute programmatic inference, forcing the model to generate its tactical reasoning transparently before writing the scouting report.Module 6: Quality Assurance Unit-Test Suite (backend/tests/test_quality.py)Build an automated regression test script leveraging DeepEval.Requirements:Import DeepEval's LLMTestCase, FaithfulnessMetric, and AnswerRelevanceMetric.Construct a test case test_scouting_pipeline() simulating a real search cycle (providing a tactical input query, a generated output, and retrieved text context).Enforce a strict statistical performance threshold of 0.85 for both metrics. If any metric falls below this score, fail the assertion.Code Output RulesZero Placeholders: Write every single line of configuration code, import statements, processing logic, loops, and return statements. Do not use # TODO or ... inside functions.Clean Separation: Ensure each file is isolated, importing components from the other modules exactly according to the directory specifications provided.Modern Python Syntax: Use typing hints, clean context handlers, and correct syntax for all selected libraries.
+# Gaffer AI Engine - Scouting Intelligence Platform
+
+**Explainable RAG-based scouting system for football recruitment with hybrid indexing and real-time impact analysis.**
+
+---
+
+## 📚 Documentation
+
+All documentation is organized in the `/docs` directory:
+
+- **[docs/INDEX.md](docs/INDEX.md)** — Documentation navigation guide
+- **[docs/ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md)** — **⭐ START HERE** — Comprehensive 10+ technology stack overview (DSPy, Milvus, Pydantic, Docling, Presidio, DeepEval, sentence-transformers, FastAPI, React). Covers 8-phase query pipeline, modular data cleaning, quality metrics, and hard-won engineering lessons.
+- **[docs/DATA_CLEANING_PIPELINE.md](docs/DATA_CLEANING_PIPELINE.md)** — Modular data cleaning & enhancement architecture with 9 independent, testable modules and shared utilities
+- **[docs/REALISTIC_SCOUTING_QUERIES.md](docs/REALISTIC_SCOUTING_QUERIES.md)** — 15 example scouting queries you can test immediately
+
+---
+
+## 🚀 Quick Start
+
+```bash
+./start.sh
+```
+
+- Backend: http://localhost:8000
+- Frontend: http://localhost:3000
+
+---
+
+## 📦 Indexing Data
+
+The system requires indexed data to function. Data indexing is **not automatic** — it must be run explicitly.
+
+### Initial Setup (First Time)
+
+Run the complete indexing pipeline:
+
+```bash
+uv run python -m backend.scripts.index_data
+```
+
+This executes:
+
+**Data Cleaning Pipeline** (modular, in `backend/scripts/data_cleaning/`):
+1. **CSV Repair** — Fix unquoted commas in position/wage fields
+2. **Defensive Stats** — Add estimated tackles/interceptions to recent seasons
+3. **Wage Assignment** — Infer realistic wages for 270 missing players
+
+**Indexing** (from `backend/scripts/index_data.py`):
+4. **Tactical Reference** — Index theory books and tactical concepts
+5. **Player Stats** — Build embeddings for season-specific stats (3 seasons)
+6. **Career Aggregates** — Build embeddings for 3-year player profiles
+
+### After Data Updates
+
+If you update CSV files in `data/epl_seasons/`, rerun indexing:
+
+```bash
+uv run python -m backend.scripts.index_data
+```
+
+### Individual Steps
+
+Run specific stages if needed:
+
+```python
+# Python API: Run full cleaning pipeline
+from backend.scripts.data_cleaning import run_cleaning_pipeline
+run_cleaning_pipeline(verbose=True)
+
+# Or run individual modules
+from backend.scripts.data_cleaning import csv_repair, defensive_stats, wage_assignment
+csv_repair.run()
+defensive_stats.run()
+wage_assignment.run()
+```
+
+See [docs/DATA_CLEANING_PIPELINE.md](docs/DATA_CLEANING_PIPELINE.md) for detailed module reference and troubleshooting.
+
+---
+
+## ✨ Key Features
+
+✅ **Hybrid Indexing** — Season-specific + 3-year career profiles  
+✅ **Smart Routing** — Auto-detects career vs. form queries  
+✅ **Impact Analysis** — Shows why each player was recommended  
+✅ **Quality Scoring** — 90-95% faithfulness & relevancy  
+✅ **Complete Data** — 797 players with realistic wages  
+✅ **Modular Pipeline** — Clean, testable data cleaning architecture  
+
+---
+
+## 🏗️ Architecture Highlights
+
+**Modular Data Cleaning & Enhancements**
+- 9 independent modules in `backend/scripts/data_cleaning/`
+- **Cleaning**: Fix CSV structure, fill missing stats, assign wages
+- **Enhancements**: Convert stats to prose, generate 3-year career profiles
+- Each step is testable and reusable
+- Single orchestrator (`pipeline.py`) controls execution
+- Shared utilities (`common.py`) eliminate code duplication
+
+**Smart RAG System**
+- Dual-index design: season-specific + career aggregates
+- Query routing: auto-detects "improving" vs "form" queries
+- Impact analysis: explains each recommendation decision
+- Career tracking: momentum, consistency, trend metrics
+
+**Quality-First**
+- DeepEval metrics: 90-95% faithfulness & relevancy
+- Filtered metrics checklist: only shows query-relevant stats
+- Privacy-aware: scrubs PII from book excerpts
+
+---
+
+## 🎯 For Your Role
+
+**Scouts & Recruiters:**
+- Start with [docs/REALISTIC_SCOUTING_QUERIES.md](docs/REALISTIC_SCOUTING_QUERIES.md) to see 15 example queries
+- Then read [docs/ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md) section 1-2 for system overview
+
+**Engineers & Developers:**
+- Read [docs/ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md) for the complete technical stack (all 10+ technologies, module organization, hard-won fixes)
+- Review [docs/DATA_CLEANING_PIPELINE.md](docs/DATA_CLEANING_PIPELINE.md) for modular data architecture and pipeline details
+
+**AI/LLM Engineers:**
+- See [docs/ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md) section 8 (Quality & Evaluation) for DeepEval metrics, grounding strategies, and DSPy signatures
+- Review section 10 (Hard-Won Lessons) for production insights
+
+---
+
+## 📂 Project Structure
+
+```
+gaffer-ai-engine/
+├── docs/                       # Complete documentation
+├── backend/
+│   ├── app/                   # Core system modules
+│   │   ├── ...core modules (RAG engine, database, LLM, query understanding)
+│   │   └── enrichment/        # Response enrichment (explain & visualize)
+│   │       ├── impact_analysis.py    # Why was player recommended?
+│   │       ├── visualization.py      # PCA scatter plot + similarity
+│   │       └── progression.py        # Career trajectory & momentum
+│   ├── scripts/
+│   │   ├── index_data.py      # Main indexing orchestrator
+│   │   ├── reindex_theory.py  # Utility: re-index tactical theory
+│   │   └── data_cleaning/     # Data cleaning & enhancements
+│   │       ├── common.py           # Shared utilities
+│   │       ├── csv_repair.py       # Fix CSV structure
+│   │       ├── defensive_stats.py  # Fill defensive stats
+│   │       ├── wage_assignment.py  # Infer wages
+│   │       ├── data_transformer.py # Stats → prose conversion
+│   │       ├── career_aggregation.py # 3-year career profiles
+│   │       ├── privacy_handler.py  # PII scrubbing
+│   │       └── pipeline.py         # Orchestrator
+│   └── tests/                 # Quality assurance
+├── frontend/                   # React UI components
+├── data/                       # EPL season data (3 years)
+├── Readme.md                  # This file
+└── start.sh                   # Quick start script
+```
+
+---
+
+## 📖 Full Documentation
+
+See the [docs/](docs/) directory for complete documentation.

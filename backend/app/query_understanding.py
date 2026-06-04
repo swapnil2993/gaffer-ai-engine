@@ -1,0 +1,465 @@
+"""Turn a plain-English scouting query into structured retrieval intent.
+
+This is what makes the natural-language query "consider the stats". We split
+intent into two kinds:
+
+* **Hard filters** — explicit numbers ("more than 10 goals") become Milvus scalar
+  filters applied BEFORE the vector search, so similarity is only computed on the
+  rows that already qualify (cheap + precise).
+* **Ranking signals** — qualitative concepts ("high-volume passing", "wins the
+  ball back") map to stat COLUMNS (PrgP, Tackles/Interceptions). Rather than
+  inventing a brittle threshold, we rank the semantically-relevant candidates by
+  a blend of cosine similarity and those columns. Robust to phrasing.
+
+Deterministic (regex + a curated concept→column map): no latency, no LLM cost,
+and fully transparent — every mapping is reported in `matched` for the UI.
+"""
+
+import re
+from typing import Dict, List, Optional
+
+# Keywords that indicate a query is asking for career/multi-year data
+_CAREER_KEYWORDS = (
+    "career",
+    "improving",
+    "declining",
+    "progression",
+    "trajectory",
+    "three year",
+    "3 year",
+    "across seasons",
+    "consistent",
+    "consistency",
+    "trend",
+    "momentum",
+    "long-term",
+    "multi-year",
+    "over time",
+    "this season vs",
+)
+
+# Most specific position words first.
+_POSITION_KEYWORDS = [
+    (("goalkeeper", "keeper", "shot-stopper", "goalie", "number 1"), "GK"),
+    (
+        (
+            "defender",
+            "centre-back",
+            "center-back",
+            "centre back",
+            "centre half",
+            "full-back",
+            "fullback",
+            "full back",
+            "right-back",
+            "left-back",
+            "wing-back",
+            "wingback",
+            "back four",
+            "defensive line",
+        ),
+        "DF",
+    ),
+    (
+        (
+            "midfielder",
+            "midfield",
+            "playmaker",
+            "box-to-box",
+            "box to box",
+            "deep-lying",
+            "regista",
+            "pivot",
+            "number 8",
+            "number 6",
+            "number 10",
+            "holding mid",
+            "central mid",
+        ),
+        "MF",
+    ),
+    (
+        (
+            "striker",
+            "forward",
+            "winger",
+            "centre-forward",
+            "center-forward",
+            "centre forward",
+            "attacker",
+            "number 9",
+            "wide forward",
+            "front man",
+            "frontman",
+            "false nine",
+        ),
+        "FW",
+    ),
+]
+
+# Qualitative concept -> stat columns to RANK by (label shown in the UI).
+# Only columns we actually index are listed; ranking ignores absent ones.
+_CONCEPT_COLUMNS = [
+    (
+        (
+            "goalscorer",
+            "goal scorer",
+            "prolific",
+            "clinical",
+            "finisher",
+            "lethal",
+            "poacher",
+            "scoring",
+            "goal threat",
+        ),
+        [("goals", "Goals"), ("xg", "xG")],
+    ),
+    (
+        (
+            "creative",
+            "playmaker",
+            "chance creat",
+            "creator",
+            "provider",
+            "assist",
+            "vision",
+            "through ball",
+            "key pass",
+        ),
+        [
+            ("assists", "Assists"),
+            ("xag", "xAG"),
+            ("big_chances_created", "Big chances created"),
+        ],
+    ),
+    (
+        (
+            "passing",
+            "passer",
+            "distribution",
+            "ball progression",
+            "progressive pass",
+            "circulat",
+            "tempo",
+            "metronom",
+        ),
+        [("prgp", "Progressive passes")],
+    ),
+    (
+        (
+            "carry",
+            "carrier",
+            "dribbl",
+            "drive",
+            "run with the ball",
+            "progressive carr",
+            "ball-carrying",
+            "ball carrying",
+        ),
+        [("prgc", "Progressive carries")],
+    ),
+    (
+        (
+            "win the ball",
+            "wins the ball",
+            "winning the ball",
+            "win it back",
+            "ball back",
+            "ball-winner",
+            "ball winner",
+            "ball-winning",
+            "tackl",
+            "break up play",
+            "breaks up play",
+            "breaking up play",
+            "defensive midfield",
+            "destroyer",
+            "intercept",
+            "regain",
+            "ball recovery",
+            "recoveries",
+            "recover possession",
+            "recover the ball",
+            "screen the defen",
+            # pressing & transition vocabulary (defensive transition = win the ball back)
+            "press",
+            "pressing",
+            "high press",
+            "high-press",
+            "counter-press",
+            "counterpress",
+            "gegenpress",
+            "gegenpressing",
+            "defensive transition",
+            "transition",
+            "transitions",
+            "out of possession",
+            "off the ball",
+            "defensive work",
+            "defensive duties",
+            "win possession",
+            "winning possession",
+            "press resistant",
+        ),
+        [
+            ("tackles_won", "Tackles won"),
+            ("tackles", "Tackles"),
+            ("interceptions", "Interceptions"),
+            ("recoveries", "Recoveries"),
+        ],
+    ),
+    (
+        ("shot-stopper", "saves", "save", "clean sheet"),
+        [("saves", "Saves"), ("clean_sheets", "Clean sheets")],
+    ),
+    (
+        (
+            "experienced",
+            "regular starter",
+            "ever-present",
+            "game time",
+            "minutes",
+            "established",
+            "mainstay",
+        ),
+        [("minutes", "Minutes"), ("appearances", "Appearances")],
+    ),
+]
+
+_STAT_WORDS = {
+    "goals": ("goals", "goal", "strikes"),
+    "assists": ("assists", "assist"),
+    "minutes": ("minutes", "minute", "mins"),
+    "appearances": ("appearances", "apps", "games", "matches"),
+}
+_SANITY_MAX = {"goals": 60, "assists": 50, "minutes": 4000, "appearances": 60}
+
+# ---------------------------------------------------------------------------
+# "Query Target Headers": a controlled tactical-concept taxonomy used to GROUP
+# theory chunks at index time AND to target the matching group at query time.
+# A search for "defensive transitions" then hits chunks grouped under
+# "Pressing & defensive transitions" instead of a random passing-metrics block.
+# The SAME taxonomy classifies chunks and queries, so the two line up.
+# ---------------------------------------------------------------------------
+TACTICAL_CONCEPTS = {
+    "Pressing & defensive transitions": (
+        "press",
+        "pressing",
+        "gegenpress",
+        "counter-press",
+        "counterpress",
+        "transition",
+        "win the ball",
+        "winning the ball",
+        "tackle",
+        "tackling",
+        "interception",
+        "intercept",
+        "regain",
+        "recover",
+        "ball-winner",
+        "out of possession",
+        "off the ball",
+        "defensive work",
+        "harry",
+        "hound",
+    ),
+    "Build-up & possession": (
+        "build-up",
+        "build up",
+        "possession",
+        "passing",
+        "circulation",
+        "progressive",
+        "tempo",
+        "playmaker",
+        "deep-lying",
+        "tiki-taka",
+        "positional play",
+        "rondo",
+        "retain",
+        "patient",
+        "metronome",
+    ),
+    "Chance creation & creativity": (
+        "chance creation",
+        "creative",
+        "creator",
+        "assist",
+        "through ball",
+        "final third",
+        "key pass",
+        "vision",
+        "playmaking",
+        "number 10",
+        "between the lines",
+        "incisive",
+    ),
+    "Finishing & goalscoring": (
+        "goalscorer",
+        "goal scorer",
+        "finishing",
+        "finisher",
+        "striker",
+        "shooting",
+        "poacher",
+        "clinical",
+        "centre-forward",
+        "centre forward",
+    ),
+    "Wide play & crossing": (
+        "winger",
+        "wide",
+        "wing",
+        "flank",
+        "full-back",
+        "fullback",
+        "overlap",
+        "cross",
+        "crossing",
+        "byline",
+        "wing-back",
+        "touchline",
+    ),
+    "Defending & structure": (
+        "defend",
+        "back line",
+        "back four",
+        "offside trap",
+        "low block",
+        "defensive line",
+        "clearance",
+        "block",
+        "marking",
+        "catenaccio",
+        "sweeper",
+        "libero",
+        "compact",
+    ),
+}
+
+
+def _concept_scores(text: str) -> dict:
+    low = (text or "").lower()
+    return {c: sum(low.count(k) for k in kws) for c, kws in TACTICAL_CONCEPTS.items()}
+
+
+def classify_tactical_concept(text: str) -> str:
+    """Assign a theory chunk to its dominant tactical concept (the group header)."""
+    scores = _concept_scores(text)
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else "General play"
+
+
+def detect_query_concept(query: str) -> Optional[str]:
+    """The tactical concept a query targets, or None (then retrieval isn't filtered)."""
+    scores = _concept_scores(query)
+    best = max(scores, key=scores.get)
+    return best if scores[best] > 0 else None
+
+
+_COST_WORDS = (
+    "wage",
+    "wages",
+    "salary",
+    "salaries",
+    "cost",
+    "budget",
+    "afford",
+    "affordab",
+    "cheap",
+    "expensive",
+    "value for money",
+    "good value",
+    "price",
+    "fee",
+    "/week",
+    "per week",
+    "/wk",
+    "money",
+    "financ",
+    "£",
+    "$",
+    "€",
+)
+
+
+def mentions_cost(query: str) -> bool:
+    """True if the query asks about wages/budget/value — then the brief may discuss cost."""
+    q = (query or "").lower()
+    return any(w in q for w in _COST_WORDS)
+
+
+def is_career_query(query: str) -> bool:
+    """True if the query asks about career arc, progression, or multi-year trends.
+
+    Career queries should hit the player_career_collection (3-year aggregates)
+    instead of season-specific stats.
+    """
+    q = (query or "").lower()
+    return any(w in q for w in _CAREER_KEYWORDS)
+
+
+def _detect_position(q: str) -> Optional[str]:
+    for words, code in _POSITION_KEYWORDS:
+        if any(w in q for w in words):
+            return code
+    return None
+
+
+def _find_threshold(q: str, words) -> Optional[int]:
+    for w in words:
+        for pat in [
+            rf"(?:more than|over|at least|minimum(?: of)?|min|upwards of|north of)\s+(\d+)\+?\s+{w}\b",
+            rf"\b(\d+)\s*\+\s*{w}\b",
+            rf"\b(\d+)\s+or\s+more\s+{w}\b",
+            rf"(?:scored|netted|notched|with|having|registered)\s+(\d+)\s+{w}\b",
+            rf"\b(\d+)\s+{w}\b",
+        ]:
+            m = re.search(pat, q)
+            if m:
+                return int(m.group(1))
+    return None
+
+
+def parse_query_constraints(query: str, position_hint: Optional[str] = None) -> Dict:
+    """Return position, hard stat filters, and `rank_by` columns from the query."""
+    q = (query or "").lower()
+    matched: List[str] = []
+
+    position = position_hint or _detect_position(q)
+    if position and not position_hint:
+        matched.append(f"position = {position} (from wording)")
+
+    # Explicit numeric thresholds -> hard filters.
+    mins: Dict[str, int] = {}
+    for field, words in _STAT_WORDS.items():
+        val = _find_threshold(q, words)
+        if val is not None and 0 < val <= _SANITY_MAX.get(field, val):
+            mins[field] = val
+            matched.append(f"{field} ≥ {val} (hard filter)")
+    stat_filters = [f"{f} >= {v}" for f, v in mins.items() if f in ("goals", "assists", "appearances")]
+
+    # Qualitative concepts -> ranking columns (weighted, de-duplicated).
+    rank_by: List[Dict] = []
+    seen_cols = set()
+    for phrases, cols in _CONCEPT_COLUMNS:
+        if any(p in q for p in phrases):
+            labels = []
+            for col, label in cols:
+                if col not in seen_cols:
+                    rank_by.append({"column": col, "label": label})
+                    seen_cols.add(col)
+                    labels.append(label)
+            if labels:
+                matched.append(f"rank by {', '.join(labels)} (from wording)")
+
+    return {
+        "position": position,
+        "min_goals": mins.get("goals"),
+        "min_assists": mins.get("assists"),
+        "min_minutes": mins.get("minutes"),
+        "stat_filters": stat_filters,
+        "rank_by": rank_by,
+        "matched": matched,
+    }

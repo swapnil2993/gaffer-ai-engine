@@ -1,36 +1,40 @@
-from pydantic import BaseModel, Field, field_validator
-from typing import Dict, Any
-import re
+from typing import Optional, List
 
-class ScoutingPayload(BaseModel):
-    """
-    Data model for football scouting reports, ensuring strict typing and validation.
-    """
-    player_name: str = Field(
-        ..., 
-        description="The full name of the scouted football player."
-    )
-    position: str = Field(
-        ..., 
-        description="The tactical position of the player (e.g., 'CF', 'LW', 'DM')."
-    )
-    season: str = Field(
-        ..., 
-        description="The scouting season in 'YYYY/YYYY' format (e.g., '2024/2025').",
-        pattern=r"^\d{4}/\d{4}$"
-    )
-    raw_text: str = Field(
-        ..., 
-        description="The layout-aware markdown text extracted from the scouting PDF."
-    )
-    metrics: Dict[str, Any] = Field(
-        default_factory=dict, 
-        description="A collection of quantitative performance metrics extracted from the report."
-    )
+from pydantic import BaseModel, Field
 
-    @field_validator("season")
-    @classmethod
-    def validate_season_format(cls, v: str) -> str:
-        if not re.match(r"^\d{4}/\d{4}$", v):
-            raise ValueError("Season must be in 'YYYY/YYYY' format.")
-        return v
+
+class PlayerStats(BaseModel):
+    """Refined based on fbref_PL_2024-25.csv"""
+
+    goals: float = Field(default=0.0, alias="Gls")
+    assists: float = Field(default=0.0, alias="Ast")
+    expected_goals: float = Field(default=0.0, alias="xG")
+    expected_assists: float = Field(default=0.0, alias="xAG")
+    progressive_carries: float = Field(default=0.0, alias="PrgC")
+    progressive_passes: float = Field(default=0.0, alias="PrgP")
+    progressive_receptions: float = Field(default=0.0, alias="PrgR")
+    minutes_played: float = Field(default=0.0, alias="Min")
+
+
+class PlayerWages(BaseModel):
+    """Refined based on player_wages.csv"""
+
+    weekly_wages: str = Field(..., alias="Weekly Wages")
+    annual_wages: str = Field(..., alias="Annual Wages")
+
+
+
+class TacticalTheoryPayload(BaseModel):
+    """Lightweight schema for Inverted Pyramid book chunks."""
+
+    title: str = Field(default="The Inverted Pyramid")
+    chapter: Optional[str] = None
+    content: str = Field(..., description="The extracted tactical theory text.")
+
+
+class EvalRequest(BaseModel):
+    """Request schema for scouting brief evaluation."""
+
+    query: str
+    scouting_brief: str
+    context: List[str] = []
