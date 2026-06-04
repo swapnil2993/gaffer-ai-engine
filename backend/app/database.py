@@ -23,11 +23,25 @@ _model = None
 THEORY_COLLECTION = "tactical_theory_collection"
 STATS_COLLECTION = "player_stats_collection"
 CAREER_COLLECTION = "player_career_collection"
+BLENDED_COLLECTION = "player_profiles_blended"  # NEW: unified season + career data
 
 EMBEDDING_MODEL_NAME = "all-MiniLM-L6-v2"
 VECTOR_DIM = 384
 
 DB_PATH = "scoutintel_local.db"
+
+# Output fields for blended collection (season-specific + career metrics)
+BLENDED_OUTPUT_FIELDS = [
+    "player_name", "season", "position", "squad", "age",
+    # Season-specific stats
+    "tackles", "tackles_won", "interceptions", "recoveries",
+    "assists", "goals", "xg", "xag", "prgc", "prgp",
+    "minutes", "appearances", "big_chances_created",
+    # Career metrics (denormalized on every record)
+    "avg_tackles", "avg_tackles_won", "avg_interceptions", "avg_recoveries",
+    "avg_assists", "avg_goals", "improvement_score", "stability_score",
+    "consistency_pct", "best_season", "trend", "text"
+]
 
 
 def get_client(retries: int = 8, delay: float = 0.75):
@@ -115,10 +129,21 @@ def init_collections():
             auto_id=True,
         )
 
+    # Blended Collection (unified season-specific + career metrics)
+    if not client.has_collection(BLENDED_COLLECTION):
+        client.create_collection(
+            collection_name=BLENDED_COLLECTION,
+            dimension=384,
+            metric_type="COSINE",
+            enable_dynamic_field=True,
+            auto_id=True,
+        )
+
     # Explicitly load collections for searching
     client.load_collection(THEORY_COLLECTION)
     client.load_collection(STATS_COLLECTION)
     client.load_collection(CAREER_COLLECTION)
+    client.load_collection(BLENDED_COLLECTION)
 
 
 def count_entities(collection_name: str) -> int:
@@ -512,3 +537,72 @@ def fetch_player_vectors(
     # plain dicts here makes the result safe to combine and iterate.
     fields = ("player_name", "position", "squad", "season", "vector")
     return [{f: r.get(f) for f in fields} for r in raw]
+
+
+def query_blended(
+    query_vector,
+    season=None,
+    position=None,
+    stat_filters=None,
+    exclude_club=None,
+    limit=25,
+):
+    """Query the blended collection (unified season-specific + career metrics).
+
+    Returns results with both season-specific AND career metrics in one record.
+
+    Args:
+        query_vector: 384-dim embedding vector
+        season: Optional season filter ("2023/24", "2024/25", etc.)
+        position: Optional position filter ("CB", "LB", "RB", etc.)
+        stat_filters: Optional list of Milvus filter expressions
+        exclude_club: Optional club to exclude
+        limit: Max results to return
+
+    Returns:
+        List of dicts with all BLENDED_OUTPUT_FIELDS populated
+    """
+    client = get_client()
+
+    # Build filter expression
+    clauses = []
+
+    if season:
+        clauses.append(f"season == '{_escape_literal(season)}'")
+
+    if position:
+        clauses.append(_build_position_filter(position))
+
+    if exclude_club:
+        clauses.append(f"squad != '{_escape_literal(exclude_club)}'")
+
+    if stat_filters:
+        clauses.extend(stat_filters)
+
+    # Combine all clauses
+    filter_expr = " and ".join(clauses) if clauses else None
+
+    # Search
+    results = client.search(
+        collection_name=BLENDED_COLLECTION,
+        data=[query_vector],
+        filter=filter_expr,
+        output_fields=BLENDED_OUTPUT_FIELDS,
+        limit=limit,
+        search_params={"metric_type": "COSINE"},
+    )
+
+    # Extract hits from first (and only) query result
+    if not results or not results[0]:
+        return []
+
+    hits = results[0]
+
+    # Materialize into plain dicts with relevance scores
+    output = []
+    for hit in hits:
+        record = {field: hit.get(field) for field in BLENDED_OUTPUT_FIELDS}
+        record["relevance_score"] = hit.get("distance", 0.0)
+        output.append(record)
+
+    return output

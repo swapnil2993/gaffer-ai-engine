@@ -280,8 +280,9 @@ _STAT_WORDS = {
     "assists": ("assists", "assist"),
     "minutes": ("minutes", "minute", "mins"),
     "appearances": ("appearances", "apps", "games", "matches"),
+    "age": ("over", "aged", "year old", "years old"),  # "over 30", "30+ years old", etc.
 }
-_SANITY_MAX = {"goals": 60, "assists": 50, "minutes": 4000, "appearances": 60}
+_SANITY_MAX = {"goals": 60, "assists": 50, "minutes": 4000, "appearances": 60, "age": 50}
 
 # ---------------------------------------------------------------------------
 # "Query Target Headers": a controlled tactical-concept taxonomy used to GROUP
@@ -536,7 +537,7 @@ def parse_query_constraints(query: str, position_hint: Optional[str] = None) -> 
         if val is not None and 0 < val <= _SANITY_MAX.get(field, val):
             mins[field] = val
             matched.append(f"{field} ≥ {val} (hard filter)")
-    stat_filters = [f"{f} >= {v}" for f, v in mins.items() if f in ("goals", "assists", "appearances")]
+    stat_filters = [f"{f} >= {v}" for f, v in mins.items() if f in ("goals", "assists", "appearances", "age")]
 
     # Qualitative concepts -> ranking columns (weighted, de-duplicated).
     rank_by: List[Dict] = []
@@ -557,6 +558,7 @@ def parse_query_constraints(query: str, position_hint: Optional[str] = None) -> 
         "min_goals": mins.get("goals"),
         "min_assists": mins.get("assists"),
         "min_minutes": mins.get("minutes"),
+        "min_age": mins.get("age"),
         "stat_filters": stat_filters,
         "rank_by": rank_by,
         "matched": matched,
