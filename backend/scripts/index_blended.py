@@ -26,7 +26,7 @@ from backend.app.enrichment.progression import calculate_progression
 DATA_DIR = Path("data/epl_seasons")
 CLEANED_FILES = {
     "2023/24": DATA_DIR / "player_stats_23-24.csv",
-    "2024/25": DATA_DIR / "player_stats_25-26.csv",
+    "2024/25": DATA_DIR / "fbref_PL_2024-25.csv",  # Complete FBRef data with all stats
 }
 POSITION_REFERENCE = DATA_DIR / "player_overview.csv"
 FBREF_FILE = DATA_DIR / "fbref_PL_2024-25.csv"  # For age data
@@ -71,7 +71,7 @@ def load_age_reference():
 
 
 def load_season_stats(filepath, season):
-    """Load cleaned CSV for a season."""
+    """Load cleaned CSV for a season (handles both custom and FBRef formats)."""
     stats_by_player = defaultdict(dict)
 
     if not filepath.exists():
@@ -81,12 +81,44 @@ def load_season_stats(filepath, season):
     with open(filepath) as f:
         reader = csv.DictReader(f)
         for row in reader:
-            player_name = row.get("player_name", "").strip()
+            # Handle both "player_name" and "Player" column names
+            player_name = (row.get("player_name") or row.get("Player") or "").strip()
             if not player_name:
                 continue
 
-            # Numeric fields
-            stat_fields = {
+            # Map column names (custom format vs FBRef format)
+            col_map = {
+                # Custom format columns
+                "tackles": "tackles",
+                "tackles_won": "tackles_won",
+                "interceptions": "interceptions",
+                "recoveries": "recoveries",
+                "assists": "assists",
+                "goals": "goals",
+                "xg": "xg",
+                "xag": "xag",
+                "prgc": "prgc",
+                "prgp": "prgp",
+                "minutes": "minutes",
+                "appearances": "appearances",
+                "big_chances_created": "big_chances_created",
+                # FBRef format columns
+                "Tkl": "tackles",
+                "TklW": "tackles_won",
+                "Int": "interceptions",
+                "Recoveries": "recoveries",
+                "Ast": "assists",
+                "Gls": "goals",
+                "xG": "xg",
+                "xAG": "xag",
+                "PrgC": "prgc",
+                "PrgP": "prgp",
+                "Min": "minutes",
+                "MP": "appearances",  # Matches played
+            }
+
+            # Numeric field types
+            stat_dtypes = {
                 "tackles": float,
                 "tackles_won": float,
                 "interceptions": float,
@@ -103,15 +135,33 @@ def load_season_stats(filepath, season):
             }
 
             stats = {"season": season, "player_name": player_name}
-            for col, dtype in stat_fields.items():
-                val = row.get(col)
-                if val and str(val).strip():
-                    try:
-                        stats[col] = dtype(val)
-                    except (ValueError, TypeError):
-                        pass
 
-            stats["squad"] = row.get("Squad", "").strip()
+            # Try to extract each stat (checking both custom and FBRef column names)
+            for custom_col, stat_name in {
+                "tackles": "tackles", "Tkl": "tackles",
+                "tackles_won": "tackles_won", "TklW": "tackles_won",
+                "interceptions": "interceptions", "Int": "interceptions",
+                "recoveries": "recoveries", "Recoveries": "recoveries",
+                "assists": "assists", "Ast": "assists",
+                "goals": "goals", "Gls": "goals",
+                "xg": "xg", "xG": "xg",
+                "xag": "xag", "xAG": "xag",
+                "prgc": "prgc", "PrgC": "prgc",
+                "prgp": "prgp", "PrgP": "prgp",
+                "minutes": "minutes", "Min": "minutes",
+                "appearances": "appearances", "MP": "appearances",
+                "big_chances_created": "big_chances_created",
+            }.items():
+                if stat_name not in stats:  # Don't override if already found
+                    val = row.get(custom_col)
+                    if val and str(val).strip():
+                        try:
+                            stats[stat_name] = stat_dtypes.get(stat_name, float)(val)
+                        except (ValueError, TypeError):
+                            pass
+
+            # Get squad (try both column names)
+            stats["squad"] = (row.get("Squad") or row.get("squad") or "").strip()
             stats_by_player[player_name] = stats
 
     return stats_by_player
