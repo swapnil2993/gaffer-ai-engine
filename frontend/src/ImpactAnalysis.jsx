@@ -171,10 +171,10 @@ export function ImpactAnalysisPanel({ impactAnalysis, candidate, aggregates }) {
     <div className="impact-analysis-panel">
       <div className="impact-header">
         <h3>📊 Impact Analysis: Why {candidate.player_name}?</h3>
-        <span className={`collection-badge ${impactAnalysis.collection_used}`}>
-          {impactAnalysis.collection_used === "player_career_collection"
-            ? "3-Year Career Profile"
-            : "Current Season"}
+        <span className={`collection-badge blended-collection`}>
+          {impactAnalysis.collection_used === "player_profiles_blended" || impactAnalysis.collection_used === "player_career_collection"
+            ? "✅ Unified Profile (Season + 3-Year Career)"
+            : "Unified Profile (Season + 3-Year Career)"}
         </span>
       </div>
 

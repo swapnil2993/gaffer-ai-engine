@@ -6,6 +6,7 @@ from fastapi.responses import HTMLResponse
 
 from backend.app.config import setup_cors
 from backend.app.database import (
+    BLENDED_COLLECTION,
     EMBEDDING_MODEL_NAME,
     STATS_COLLECTION,
     THEORY_COLLECTION,
@@ -52,23 +53,40 @@ async def system_status():
         "embedding_model": EMBEDDING_MODEL_NAME,
         "vector_dim": VECTOR_DIM,
         "collections": {
-            "player_stats": {
-                "name": STATS_COLLECTION,
-                "rows": count_entities(STATS_COLLECTION),
-                "description": "Per-player season stats (Index B)",
-                "coverage": "All 3 seasons: 2023/24 (1019), 2024/25 (574), 2025/26 (573)",
+            "player_profiles_blended": {
+                "name": BLENDED_COLLECTION,
+                "rows": count_entities(BLENDED_COLLECTION),
+                "status": "ACTIVE ✅",
+                "description": "Unified collection: season-specific + career metrics in one record",
+                "coverage": "1,466 blended records (1,219 players × 1-2 seasons)",
+                "architecture": "One query returns both current form (season-specific) AND 3-year trends (career)",
+                "benefits": [
+                    "DeepEval gets complete context (season + career)",
+                    "Hybrid queries work naturally (improving AND sharp now)",
+                    "Simplified retrieval pipeline",
+                    "Consistent position across seasons (from 2023/24 reference)"
+                ]
             },
-            "player_career": {
-                "name": CAREER_COLLECTION,
-                "rows": count_entities(CAREER_COLLECTION),
-                "description": "Multi-season career profiles (Index C)",
-                "coverage": "Players with 2+ seasons for trajectory analysis",
+            "legacy_collections": {
+                "note": "Preserved for backward compatibility, not actively used",
+                "player_stats": {
+                    "name": STATS_COLLECTION,
+                    "rows": count_entities(STATS_COLLECTION),
+                    "description": "[LEGACY] Per-player season stats",
+                    "status": "Preserved, not used"
+                },
+                "player_career": {
+                    "name": CAREER_COLLECTION,
+                    "rows": count_entities(CAREER_COLLECTION),
+                    "description": "[LEGACY] Multi-season career profiles",
+                    "status": "Preserved, not used"
+                },
             },
         },
         "tactical_reference": get_tactical_reference_info(),
         "seasons": ["2023/2024", "2024/2025", "2025/2026"],
         "data_sources": {
-            "player_stats_23-24.csv": "1019 players with defensive stats (Tkl, Int)",
+            "player_stats_23-24.csv": "1,019 players with defensive stats (Tkl, Int) — position authoritative source",
             "fbref_PL_2024-25.csv": "574 players with full season metrics",
             "merged_25_26.csv": "573 players from merged stats + defensive data",
             "player_wages.csv": "562 players with annual/weekly wages",
@@ -78,18 +96,19 @@ async def system_status():
             "defenders": "CB (centre-back), LB (left-back), RB (right-back), LWB, RWB",
             "midfielders": "CM (central), DM (defensive), AM (attacking)",
             "forwards": "ST (striker), IF (inside forward), W (winger)",
-            "inference": "Inferred from Tackles Won + Interceptions intensity",
+            "inference": "From authoritative 2023/24 reference, consistent across all seasons",
         },
         "llm": {"ready": is_dspy_ready(), "model": _lm_name()},
         "pipeline": [
             "1. Embed query (384-d vector space)",
-            "2. Understand query (infer position, player, club, stats)",
-            "3. Retrieve tactical theory (Index A, semantic + concepts)",
-            "4. Retrieve candidates (Index B, hybrid scalar+vector)",
-            "5. Rank by stats (blend 50/50 cosine + per-90 metrics)",
-            "6. Enrich with reference data (manager, wages, career)",
+            "2. Understand query (position, player, club, stats from wording)",
+            "3. Retrieve tactical theory (Index A: semantic + tactical concepts)",
+            "4. Retrieve candidates (Index B: blended collection, hybrid scalar+vector)",
+            "   └─ Optional season filter for current form, or no filter for 3-year analysis",
+            "5. Rank by stats (blend 50/50 cosine similarity + per-90 metrics)",
+            "6. Enrich (manager, wages, career metrics from single record)",
             "7. Project to 2D (PCA similarity visualization)",
-            "8. Generate brief (DSPy ChainOfThought)",
+            "8. Generate brief (DSPy ChainOfThought with complete context)",
         ],
     }
 

@@ -120,7 +120,7 @@ in 2024/25 or genuine decline? Show both current form AND career context.
 ## Query 11: Veteran Leader — Proven Consistency + Current Reliability
 ```
 Midfielder over 30 with very stable, consistent performance over 3+ years. 
-Must still be reliable right now (2024/25 form matters). Squad depth and 
+Must still be reliable. Squad depth and 
 changing room presence, but only if currently performing.
 ```
 
@@ -131,7 +131,7 @@ changing room presence, but only if currently performing.
 ## Query 12: Defensive Midfielder — Tactical + Form + Consistency
 ```
 Our new 4-2-3-1 formation needs a defensive-minded midfielder strong in recovery 
-and tackle. Give me options for 2024/25, but prioritize players who've been 
+and tackle. prioritize players who've been 
 consistently good at this role (3-year view) AND currently sharp.
 ```
 

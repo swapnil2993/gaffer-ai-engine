@@ -119,8 +119,7 @@ const EvalScorecard = ({ data }) => (
 const SystemBar = ({ sys }) => {
   if (!sys) return null;
   const collections = sys.collections || {};
-  const playerStats = collections.player_stats?.rows ?? '—';
-  const career = collections.player_career?.rows ?? '—';
+  const blended = collections.player_profiles_blended?.rows ?? '—';
   const tacticalRef = sys.tactical_reference || {};
 
   return (
@@ -135,21 +134,16 @@ const SystemBar = ({ sys }) => {
       </div>
 
       {/* Collections Grid */}
-      <div className="grid grid-cols-3 gap-2 text-xs">
-        {/* Player Stats Collection */}
-        <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
-          <div className="font-semibold text-blue-300 mb-1">Player Stats</div>
-          <div className="text-blue-200 text-sm font-bold mb-1">{playerStats}</div>
-          <div className="text-blue-400 text-[10px]">3 seasons</div>
-          <div className="text-blue-400 text-[10px]">Season-specific stats</div>
-        </div>
-
-        {/* Career Collection */}
-        <div className="bg-purple-500/10 border border-purple-500/20 rounded p-2">
-          <div className="font-semibold text-purple-300 mb-1">Career Profiles</div>
-          <div className="text-purple-200 text-sm font-bold mb-1">{career}</div>
-          <div className="text-purple-400 text-[10px]">Multi-season</div>
-          <div className="text-purple-400 text-[10px]">Trajectory analysis</div>
+      <div className="grid grid-cols-2 gap-2 text-xs">
+        {/* Blended Collection (Active) */}
+        <div className="bg-gradient-to-br from-scout-gold/20 to-scout-gold/5 border border-scout-gold/40 rounded p-2">
+          <div className="font-semibold text-scout-gold mb-1 flex items-center gap-1.5">
+            <CheckCircle2 className="w-3 h-3" /> Player Profiles (Blended)
+          </div>
+          <div className="text-scout-gold text-sm font-bold mb-1">{blended} records</div>
+          <div className="text-scout-gold/80 text-[10px]">✅ ACTIVE</div>
+          <div className="text-scout-gold/70 text-[10px]">Season + Career unified</div>
+          <div className="text-scout-gold/70 text-[10px]">1,219 players × seasons</div>
         </div>
 
         {/* Tactical Reference */}
@@ -160,6 +154,18 @@ const SystemBar = ({ sys }) => {
           <div className="text-green-400 text-[10px]">Structured profiles</div>
         </div>
       </div>
+
+      {/* Legacy Collections Note */}
+      {collections.legacy_collections && (
+        <div className="bg-gray-500/5 border border-gray-500/20 rounded p-2 text-[10px]">
+          <div className="text-gray-400 mb-0.5">
+            <span className="text-gray-500">Legacy collections (preserved, not used):</span>
+          </div>
+          <div className="text-gray-500">
+            {collections.legacy_collections.player_stats?.rows} season-specific · {collections.legacy_collections.player_career?.rows} career profiles
+          </div>
+        </div>
+      )}
 
       {/* Data Sources */}
       {sys.data_sources && (

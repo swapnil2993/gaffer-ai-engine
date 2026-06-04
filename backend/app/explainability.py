@@ -353,22 +353,24 @@ def explainability_ledger(
             "reason": f"Position is {candidate.get('position')}",
         })
 
-    # Stat thresholds passed
+    # Stat thresholds passed (handle None values safely)
     stats = candidate.get("stats", {})
-    if stats.get("tackles", 0) > 100:
+    tackles = stats.get("tackles") or 0
+    if tackles > 100:
         score += 30
         ledger["decision_components"].append({
             "factor": "Defensive strength",
             "points": 30,
-            "reason": f"Tackles: {int(stats.get('tackles', 0))} (> 100)",
+            "reason": f"Tackles: {int(tackles)} (> 100)",
         })
 
-    if stats.get("assists", 0) > 5:
+    assists = stats.get("assists") or 0
+    if assists > 5:
         score += 25
         ledger["decision_components"].append({
             "factor": "Creative output",
             "points": 25,
-            "reason": f"Assists: {int(stats.get('assists', 0))} (> 5)",
+            "reason": f"Assists: {int(assists)} (> 5)",
         })
 
     # Semantic match
@@ -381,21 +383,22 @@ def explainability_ledger(
             "reason": f"Query similarity: {cosine:.2f} (> 0.70)",
         })
 
-    # Career trajectory
+    # Career trajectory (handle None values safely)
     progression = candidate.get("progression", {})
+    momentum = (progression.get('momentum') or 0) * 100
     if progression.get("trend") == "improving":
         score += 15
         ledger["decision_components"].append({
             "factor": "Improving trajectory",
             "points": 15,
-            "reason": f"Momentum: {progression.get('momentum', 0)*100:+.0f}% YoY",
+            "reason": f"Momentum: {momentum:+.0f}% YoY",
         })
     elif progression.get("trend") == "declining":
         score -= 10
         ledger["decision_components"].append({
             "factor": "Declining trajectory",
             "points": -10,
-            "reason": f"Momentum: {progression.get('momentum', 0)*100:+.0f}% YoY",
+            "reason": f"Momentum: {momentum:+.0f}% YoY",
         })
 
     ledger["total_score"] = max(0, min(100, score))  # Clamp to 0-100
