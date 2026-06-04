@@ -1,21 +1,22 @@
 import os
 import re
 import time
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import dspy
 import numpy as np
 
 from backend.app.database import (
+    BLENDED_COLLECTION,
     CAREER_COLLECTION,
     EMBEDDING_MODEL_NAME,
     STATS_COLLECTION,
-    THEORY_COLLECTION,
     VECTOR_DIM,
     fetch_player_history,
     fetch_player_vectors,
     get_embedding,
     get_embeddings,
+    query_blended,
     query_career,
     query_stats,
     query_theory,
@@ -45,6 +46,7 @@ from backend.app.reference import (
     get_manager_profile,
     normalize_club,
 )
+from backend.app.tactical_reference import search_tactical_systems
 from backend.app.explainability import (
     confidence_score_intent,
     rank_alternatives,
@@ -81,6 +83,9 @@ _STAT_LABELS = {
     "big_chances_created": "big chances created",
     "saves": "saves",
     "clean_sheets": "clean sheets",
+    "improvement_score": "improvement",
+    "stability_score": "stability",
+    "consistency_pct": "consistency %",
 }
 
 
@@ -92,13 +97,34 @@ def _focused_profile(candidate, columns):
     if not columns:
         return candidate.get("stats_summary", "")
     stats = candidate.get("stats") or {}
-    base = f"{candidate['player_name']} ({candidate['position']}, {candidate['current_club']}, {candidate['season']})"
+    base = f"{candidate.get('player_name', 'Unknown')} ({candidate.get('position', '?')}, {candidate.get('current_club', 'Unknown')}, {candidate.get('season', 'N/A')})"
     mins, apps = stats.get("minutes"), stats.get("appearances")
     if mins:
         base += f", {int(mins)} mins"
     elif apps:
         base += f", {int(apps)} apps"
-    facets = [f"{int(v)} {_STAT_LABELS.get(col, col)}" for col in columns if (v := stats.get(col)) is not None]
+
+    facets = []
+    for col in columns:
+        v = None
+        # Check stats dictionary first
+        if col in stats and stats[col] is not None:
+            v = stats[col]
+        # For progression metrics, also check candidate-level data (for backward compat)
+        elif col in ("improvement_score", "stability_score", "consistency_pct") and col in candidate and candidate[col] is not None:
+            v = candidate.get(col)
+
+        if v is not None:
+            # Format based on metric type
+            if col == "consistency_pct":
+                facets.append(f"{int(v)}% {_STAT_LABELS.get(col, col)}")
+            elif col in ("improvement_score", "stability_score"):
+                # These are 0-1 floats, format as percentage
+                facets.append(f"{v:.0%} {_STAT_LABELS.get(col, col)}")
+            else:
+                # Other stats are integers or large decimals
+                facets.append(f"{int(v)} {_STAT_LABELS.get(col, col)}")
+
     return base + (" — " + ", ".join(facets) + "." if facets else ".")
 
 
@@ -152,9 +178,10 @@ class ScoutingReportSignature(dspy.Signature):
          Step 4: Write brief grounded in data (either checklist or raw stats).
 
       5. When career data is provided in metrics_checklist:
-         - For "improving": cite momentum ✓ and trend
-         - For "consistent": cite consistency metric and variance
+         - For "improving": cite improvement_score ✓ and upward trend explicitly
+         - For "consistent": cite stability_score ✓ and consistency_pct to show reliability
          - For "declining": cite negative momentum with warning
+         - Always blend current season form WITH career baseline when both are available
 
       6. CRITICAL RULES (Prevent Hallucination):
          - DO NOT invent metrics or thresholds not in checklist or player stats
@@ -256,6 +283,9 @@ def _build_candidate(hit: Any) -> Dict[str, Any]:
             "big_chances_created",
             "clean_sheets",
             "saves",
+            "improvement_score",
+            "stability_score",
+            "consistency_pct",
         )
         if _hit_field(hit, k) is not None
     }
@@ -285,6 +315,10 @@ def _build_candidate(hit: Any) -> Dict[str, Any]:
         "stats": stats_dict,
         "progression": progression,
         "progression_summary": progression_summary,
+        # Explicit scores for LLM to use when differentiating candidates
+        "stability_score": progression.get("stability_score", 0),  # 0-1: consistency across seasons
+        "improvement_score": progression.get("improvement_score", 0),  # 0-1: upward trajectory strength
+        "consistency_pct": progression.get("consistency_pct", 0),  # 0-100: human-readable consistency
         "tactical_suitability": tactical_fit,
         "manager_tactics": manager_tactics,
         "tactical_alignment": tactical_alignment,
@@ -293,12 +327,167 @@ def _build_candidate(hit: Any) -> Dict[str, Any]:
     }
 
 
+def _enrich_candidate_defaults(c: Dict[str, Any], season: Optional[str] = None) -> Dict[str, Any]:
+    """Ensure a candidate has all required enriched fields, filling in defaults for career results."""
+
+    # Ensure player_name and position are always present (should be from source data)
+    if "player_name" not in c:
+        c["player_name"] = (c.get("name") or "Unknown").strip()
+    else:
+        # Clean up any whitespace in player_name
+        c["player_name"] = (c["player_name"] or "Unknown").strip()
+
+    # Ensure position is set (may come from database or be empty)
+    position = (c.get("position") or "").strip()
+    if not position or position == "Unknown":
+        # Try to fetch from player history if not available
+        player_name = c.get("player_name")
+        if player_name and player_name != "Unknown":
+            try:
+                history = fetch_player_history(player_name)
+                if history and isinstance(history, list) and len(history) > 0:
+                    # Get position from the most recent season
+                    for row in reversed(history):
+                        if row.get("position") and row.get("position") != "Unknown":
+                            position = row.get("position")
+                            break
+            except Exception:
+                pass
+
+    c["position"] = position or "Unknown"
+
+    # Determine the club (season-specific results use "squad", career results use "best_squad")
+    # Try season-specific squad first, then fallback to best_squad or current_club
+    squad = (c.get("squad") or c.get("best_squad") or c.get("current_club") or "").strip()
+
+    # If no squad found, try to fetch from player history
+    if not squad or squad == "Unknown":
+        player_name = c.get("player_name")
+        if player_name and player_name != "Unknown":
+            try:
+                history = fetch_player_history(player_name)
+                if history and isinstance(history, list) and len(history) > 0:
+                    # history is sorted ascending, so last item is most recent
+                    latest_row = history[-1]
+                    squad = (latest_row.get("squad") or "").strip()
+            except Exception:
+                pass  # If history fetch fails, continue with None
+
+    # Final fallback to best_squad if we still don't have a squad
+    if not squad or squad == "Unknown":
+        squad = (c.get("best_squad") or "").strip()
+
+    squad = squad or "Unknown"
+
+    # Set current_club if not already set
+    if "current_club" not in c:
+        c["current_club"] = squad
+
+    # Get manager profile (try multiple clubs if the primary one fails)
+    if "current_manager" not in c:
+        # Strip and normalize the squad name before lookup
+        normalized_squad = normalize_club(squad) if squad and squad != "Unknown" else squad
+        manager_profile = get_manager_profile(squad, season)
+
+        # If manager lookup failed, try alternative squad sources
+        if not manager_profile.get("manager"):
+            for alt_squad in [c.get("best_squad"), c.get("squad"), c.get("current_club")]:
+                if alt_squad and alt_squad != squad:
+                    alt_manager = get_manager_profile(alt_squad, season)
+                    if alt_manager.get("manager"):
+                        manager_profile = alt_manager
+                        break
+
+        c["current_manager"] = manager_profile.get("manager") or "manager unknown"
+        c["manager_playing_style"] = manager_profile.get("style") or ""
+        c["manager_season"] = manager_profile.get("season")
+
+    # Get estimated cost
+    if "estimated_cost" not in c:
+        player_name = (c.get("player_name") or "").strip()
+        if player_name and player_name != "Unknown":
+            c["estimated_cost"] = get_estimated_cost(player_name)
+        else:
+            # Fallback if no player name
+            c["estimated_cost"] = {
+                "weekly_wages": None,
+                "annual_wages": None,
+                "basis": "No wage data available for this player.",
+            }
+
+    # Ensure progression is populated (for blended records, include all career metrics)
+    if "progression" not in c:
+        c["progression"] = {
+            "momentum": c.get("momentum", 0),
+            "trend": c.get("trend", "stable"),
+            "improvement_score": c.get("improvement_score", 0),
+            "stability_score": c.get("stability_score", 0),
+            "consistency_pct": c.get("consistency_pct", 0),
+        }
+
+    # Set progression_summary for career results
+    if "progression_summary" not in c and c.get("momentum") is not None:
+        momentum = c.get("momentum", 0)
+        trend_desc = ""
+        if momentum > 0.15:
+            trend_desc = f"Improving ({momentum:+.0%})"
+        elif momentum < -0.15:
+            trend_desc = f"Declining ({momentum:+.0%})"
+        else:
+            trend_desc = "Stable"
+        c["progression_summary"] = trend_desc
+
+    # Use career prose as stats_summary if not already set
+    if "stats_summary" not in c and c.get("text"):
+        c["stats_summary"] = c["text"]
+
+    # Compute tactical suitability for career results if not already set
+    if "tactical_suitability" not in c:
+        # For career results, compute from available stats
+        stats_dict = {
+            k: c.get(f"avg_{k}" if k in ("goals", "assists", "prgp", "tackles") else k)
+            for k in ("goals", "assists", "xg", "xag", "prgc", "prgp", "tackles", "tackles_won")
+            if c.get(f"avg_{k}" if k in ("goals", "assists", "prgp", "tackles") else k) is not None
+        }
+        c["tactical_suitability"] = analyze_tactical_suitability(stats_dict) if stats_dict else []
+
+    # Extract manager tactics for the current club if not already set
+    if "manager_tactics" not in c:
+        manager_style = c.get("manager_playing_style")
+        c["manager_tactics"] = extract_manager_tactics(manager_style) if manager_style else []
+
+    # Compute tactical alignment if not already set
+    if "tactical_alignment" not in c:
+        c["tactical_alignment"] = compare_alignment(c.get("manager_tactics", []), c.get("tactical_suitability", []))
+
+    # For career aggregates, populate stats dict from avg_* fields so _focused_profile can find them
+    if "stats" not in c or not c.get("stats"):
+        c["stats"] = {}
+    if not c["stats"]:
+        # Map avg_* fields from career aggregates to stats dict
+        avg_fields = ["avg_goals", "avg_assists", "avg_prgp", "avg_tackles", "avg_tackles_won", "avg_interceptions"]
+        for field in avg_fields:
+            if field in c:
+                # Map avg_tackles → tackles, avg_tackles_won → tackles_won, etc.
+                stat_name = field.replace("avg_", "")
+                c["stats"][stat_name] = c[field]
+
+    # Ensure progression metrics from top-level fields are in stats dict (for blended records)
+    # This is needed so explainability_ledger, _focused_profile, and ranking functions can access them
+    progression_fields = ["improvement_score", "stability_score", "consistency_pct"]
+    for field in progression_fields:
+        if field in c and c[field] is not None and field not in c["stats"]:
+            c["stats"][field] = c[field]
+
+    return c
+
+
 def _format_candidate_for_prompt(c: Dict[str, Any], include_cost: bool = False) -> str:
     """Render a candidate as a compact, grounded block for the LLM context."""
     # Wage/cost is included ONLY when the query asks about it (include_cost) — for
     # purely tactical queries it's off-topic and dilutes the brief.
-    manager = c["current_manager"] or "manager unknown"
-    style = c["manager_playing_style"]
+    manager = c.get("current_manager") or "manager unknown"
+    style = c.get("manager_playing_style") or ""
     manager_line = f"manager: {manager}" + (f", style: {style}" if style else "")
     cost_line = ""
     if include_cost:
@@ -307,10 +496,10 @@ def _format_candidate_for_prompt(c: Dict[str, Any], include_cost: bool = False) 
         weekly = cost.get("weekly_wages")
         cost_line = f" | wage cost: {wage}/yr" + (f" ({weekly}/wk)" if weekly else "")
     # Use the aspect-scoped profile when available (query had concept cues).
-    profile = c.get("context_profile") or c["stats_summary"]
+    profile = c.get("context_profile") or c.get("stats_summary", "No stats available")
     return (
-        f"- {c['player_name']} | {c['position']} | {c['current_club']} "
-        f"({manager_line}) | season {c['season']}{cost_line}\n"
+        f"- {c.get('player_name', 'Unknown')} | {c.get('position', '?')} | {c.get('current_club', 'Unknown')} "
+        f"({manager_line}) | season {c.get('season', 'N/A')}{cost_line}\n"
         f"  Stats: {profile}"
     )
 
@@ -355,19 +544,24 @@ def _filter_checklist_by_concept(checklist_text: str, concepts: list) -> str:
     """Filter metrics checklist to only show query-relevant metrics.
 
     Reduces noise and improves answer relevancy by removing metrics
-    that aren't related to the query's tactical concepts.
+    that aren't related to the query's tactical concepts. However, always
+    keep career/progression metrics (improvement, stability, consistency)
+    as they're crucial for many queries.
     """
     if not concepts or not checklist_text:
         return checklist_text
 
     # Map concepts to checklist section keywords
     concept_keywords = {
-        "high_press": ["PRESSING", "HIGH PRESS", "PRESS"],
-        "ball_progression": ["PROGRESSION", "BALL PROGRESSION", "PASSING"],
-        "creative": ["CREATIVE", "ASSISTS", "PLAYMAKING", "KEY PASS"],
-        "defensive_transition": ["DEFENSIVE", "DEFENSIVE TRANSITION", "TACKLES", "INTERCEPTIONS", "RECOVERY"],
-        "goal_threat": ["GOAL", "GOALS", "THREAT", "FINISHING"],
-        "momentum": ["MOMENTUM", "TRAJECTORY", "TREND"],
+        "high_press": ["PRESSING", "HIGH PRESS", "PRESS", "WORK RATE"],
+        "ball_progression": ["PROGRESSION", "BALL PROGRESSION", "PASSING", "CARRY"],
+        "creative": ["CREATIVE", "ASSISTS", "PLAYMAKING", "KEY PASS", "CHANCE"],
+        "defensive_transition": ["DEFENSIVE", "DEFENSIVE TRANSITION", "TACKLES", "INTERCEPTIONS", "RECOVERY", "1V1"],
+        "goal_threat": ["GOAL", "GOALS", "THREAT", "FINISHING", "CLINICAL"],
+        "momentum": ["MOMENTUM", "TRAJECTORY", "TREND", "IMPROVEMENT", "STABILITY", "CONSISTENCY"],
+        "player_development": ["IMPROVEMENT", "STABILITY", "CONSISTENCY", "TRAJECTORY", "YOUNG", "EMERGING"],
+        "defending": ["TACKLES", "INTERCEPTIONS", "CLEARANCE", "1V1", "DEFENDING"],
+        "attacking_fullback": ["ASSISTS", "PROGRESSIVE", "FULLBACK", "CARRIES", "ATTACKING"],
     }
 
     # Collect relevant keywords from query concepts
@@ -375,6 +569,9 @@ def _filter_checklist_by_concept(checklist_text: str, concepts: list) -> str:
     for concept in concepts:
         keywords = concept_keywords.get(concept.lower(), [])
         relevant_keywords.update(kw.upper() for kw in keywords)
+
+    # Always include progression/stability metrics (important for all queries)
+    relevant_keywords.update(["IMPROVEMENT", "STABILITY", "CONSISTENCY", "TRAJECTORY", "MOMENTUM"])
 
     if not relevant_keywords:
         return checklist_text  # No filtering if no concepts matched
@@ -445,10 +642,107 @@ def _rerank_by_stats(candidates, rank_by):
     return reordered, applied
 
 
+def _get_fallback_positions(position):
+    """Get fallback positions for a given position (shared logic).
+
+    Used by both season-specific and blended retrieval.
+    """
+    if position == "LB":
+        return ["RB", "LWB", "RWB"]
+    elif position == "RB":
+        return ["LB", "LWB", "RWB"]
+    elif position in ("CM", "DM", "AM"):
+        return ["CM", "DM", "AM"]
+    elif position in ("CB", "LWB", "RWB"):
+        return ["CB", "LB", "RB"]
+    elif position in ("ST", "IF", "W"):
+        return ["ST", "IF", "W"]
+    return None
+
+
 class ScoutIntelRAG(dspy.Module):
     def __init__(self):
         super().__init__()
         self.generate_report = dspy.ChainOfThought(ScoutingReportSignature)
+
+    def _retrieve_candidates_blended(
+        self,
+        query_vector,
+        position,
+        stat_filters,
+        limit=25,
+        season=None,
+        exclude_club=None,
+    ):
+        """Retrieve candidates from blended collection.
+
+        One function for both season-specific AND career queries.
+        Season parameter is optional:
+        - If season specified: returns that season (current form)
+        - If season None: returns all seasons (for career analysis)
+        """
+        pool, filter_note = self._retrieve_with_fallback_blended(
+            query_vector,
+            position=position,
+            stat_filters=stat_filters,
+            season=season,
+            exclude_club=exclude_club,
+            limit=limit,
+        )
+
+        return pool, filter_note
+
+    def _retrieve_with_fallback_blended(
+        self,
+        query_vector,
+        position,
+        stat_filters,
+        season,
+        exclude_club,
+        limit,
+    ):
+        """Fallback ladder for blended collection (unified approach)."""
+        sf = list(stat_filters or [])
+
+        # Fallback ladder (simpler - just position fallback)
+        ladder = [
+            (position, sf, season, "all constraints (incl. stat thresholds)"),
+            (position, [], season, "stat thresholds relaxed"),
+        ]
+
+        # Add granular position fallback if needed
+        fallback_positions = _get_fallback_positions(position)
+        if fallback_positions:
+            for fallback_pos in fallback_positions:
+                if fallback_pos != position:
+                    ladder.append(
+                        (fallback_pos, [], season, f"position relaxed ({position} → {fallback_pos})")
+                    )
+
+        # Only unfiltered if NO position was specified
+        if not position:
+            ladder.append((None, [], season, "position relaxed (no matches)"))
+
+        seen = set()
+        for p, f, s, note in ladder:
+            key = (p, tuple(f), s)
+            if key in seen:
+                continue
+            seen.add(key)
+
+            hits = query_blended(
+                query_vector,
+                position=p,
+                season=s,
+                stat_filters=f,
+                exclude_club=exclude_club,
+                limit=limit,
+            )
+
+            if hits:
+                return hits, note
+
+        return [], "no players matched"
 
     def _retrieve_candidates_career(
         self,
@@ -456,6 +750,7 @@ class ScoutIntelRAG(dspy.Module):
         position,
         stat_filters,
         limit,
+        exclude_club=None,
     ):
         """Retrieve players from career aggregates (multi-season profiles).
 
@@ -466,18 +761,40 @@ class ScoutIntelRAG(dspy.Module):
         if a specific player is named in the query.
         """
         sf = list(stat_filters or [])
+        # Career queries: keep position constraint until last resort
+        # Relax stat filters first, then position
         ladder = [
             (position, sf, "all constraints (incl. stat thresholds)"),
             (position, [], "stat thresholds relaxed"),
-            (None, [], "position relaxed"),
         ]
+
+        # Add granular position fallback for fullbacks/midfielders
+        fallback_positions = None
+        if position == "LB":
+            fallback_positions = ["RB", "LWB", "RWB"]  # Other fullbacks
+        elif position == "RB":
+            fallback_positions = ["LB", "LWB", "RWB"]  # Other fullbacks
+        elif position in ("CM", "DM", "AM"):
+            fallback_positions = ["CM", "DM", "AM"]  # Other midfielders
+        elif position in ("CB", "LWB", "RWB"):
+            fallback_positions = ["CB", "LB", "RB"]  # Other defenders
+
+        # Add fallback positions if we have them
+        if fallback_positions:
+            for fallback_pos in fallback_positions:
+                if fallback_pos != position:
+                    ladder.append((fallback_pos, [], f"position relaxed ({position} → {fallback_pos})"))
+
+        # Only add fully unfiltered fallback if NO position was specified
+        if not position:
+            ladder.append((None, [], "position relaxed (no matches found with specified position)"))
         seen = set()
         for p, f, note in ladder:
             key = (p, tuple(f))
             if key in seen:
                 continue
             seen.add(key)
-            hits = query_career(query_vector, position=p, stat_filters=f, limit=limit)
+            hits = query_career(query_vector, position=p, stat_filters=f, exclude_club=exclude_club, limit=limit)
             if hits:
                 return hits, note
         return [], "no career profiles matched"
@@ -490,6 +807,7 @@ class ScoutIntelRAG(dspy.Module):
         min_minutes,
         stat_filters,
         limit,
+        exclude_club=None,
     ):
         """Retrieve players, relaxing filters step-by-step until something matches.
 
@@ -503,6 +821,20 @@ class ScoutIntelRAG(dspy.Module):
         if a specific player is named in the query.
         """
         sf = list(stat_filters or [])
+        # Build relaxation ladder with intelligent position relaxation
+        # Uses granular positions (CB, LB, RB, CM, DM, AM, ST, IF, W, GK) only
+        fallback_positions = None
+        if position == "CB":
+            fallback_positions = ["LB", "RB"]  # Centre-backs fall back to other defenders
+        elif position in ("LB", "RB", "LWB", "RWB"):
+            fallback_positions = ["CB", "LB", "RB"]  # Fullbacks fall back to other defenders
+        elif position in ("CM", "DM", "AM"):
+            fallback_positions = ["CM", "DM", "AM"]  # Midfielders fall back to other mid positions
+        elif position in ("ST", "IF", "W"):
+            fallback_positions = ["ST", "IF", "W"]  # Forwards fall back to other forward positions
+        elif position == "GK":
+            fallback_positions = ["GK"]  # Goalkeepers stay GK (no fallback)
+
         ladder = [
             (
                 season,
@@ -513,16 +845,34 @@ class ScoutIntelRAG(dspy.Module):
             ),
             (season, position, min_minutes, [], "stat thresholds relaxed"),
             (season, position, None, [], "min-minutes relaxed"),
-            (season, None, None, [], "position relaxed"),
-            (None, None, None, [], "unfiltered (all relaxed)"),
+            # Before broader position relaxation, try relaxing season
+            (None, position, None, [], "season relaxed (multi-season context)"),
         ]
+
+        # Add intelligent position relaxation with granular fallbacks
+        if fallback_positions:
+            for fallback_pos in fallback_positions:
+                if fallback_pos != position:  # Skip if same as original
+                    ladder.append(
+                        (season, fallback_pos, None, [], f"position relaxed ({position} → {fallback_pos})")
+                    )
+            for fallback_pos in fallback_positions:
+                if fallback_pos != position:
+                    ladder.append(
+                        (None, fallback_pos, None, [], f"season + position relaxed ({position} → {fallback_pos})")
+                    )
+
+        # Final fallback: fully unfiltered ONLY if no position was explicitly requested
+        # If user asked for RB/CB/DF etc., don't fall back to all positions (which would include FW)
+        if not position:
+            ladder.append((None, None, None, [], "unfiltered (all relaxed)"))
         seen = set()
         for s, p, m, f, note in ladder:
             key = (s, p, m, tuple(f))
             if key in seen:
                 continue
             seen.add(key)
-            hits = query_stats(query_vector, s, p, min_minutes=m, stat_filters=f, limit=limit)
+            hits = query_stats(query_vector, s, p, min_minutes=m, stat_filters=f, exclude_club=exclude_club, limit=limit)
             if hits:
                 return [_build_candidate(h) for h in hits], note
         return [], "no matches"
@@ -623,95 +973,103 @@ class ScoutIntelRAG(dspy.Module):
 
         # Phase 3 — Index A: concept-targeted theory retrieval, then compression
         t = time.perf_counter()
-        # Use tactical concepts extracted from query to pre-filter book chunks
-        theory_results = query_theory(query_str, limit=3, concepts=tactical_concepts if tactical_concepts else None)
-        
-        theory_hits = []
-        for r in theory_results:
-            hit_text = _hit_field(r, "text", "")
-            # Compress for the LLM prompt, but keep metadata for the UI
-            compressed = _compress_theory(query_vector, [hit_text])[0]
-            theory_hits.append({
-                "text": compressed,
-                "heading": _hit_field(r, "heading", "General"),
-                "era": _hit_field(r, "era"),
-                "formation": _hit_field(r, "formation"),
-                "style": _hit_field(r, "possession_style_tag"),
-                "line_height": _hit_field(r, "defensive_line_height"),
-                "weights": _hit_field(r, "fbref_metric_weights", {})
-            })
+        # Lookup structured tactical reference (not book indexing)
+        tactical_ref_hits = search_tactical_systems(query_str)
 
-        theory_context = "\n".join(h["text"] for h in theory_hits)
+        # Also query database for Football Hackers context pack chunks
+        football_hackers_hits = query_theory(query_str, limit=3)
+
+        theory_context = ""
+        if tactical_ref_hits:
+            theory_context = "TACTICAL REFERENCE SYSTEMS:\n"
+            for system in tactical_ref_hits[:3]:  # Use top 3 most relevant systems
+                theory_context += f"\n{system.get('display_name', 'System')}:\n"
+                theory_context += f"  {system.get('description', '')}\n"
+                if system.get('key_metrics'):
+                    theory_context += f"  Key Metrics: {', '.join(system.get('key_metrics', []))}\n"
+                if system.get('player_profile'):
+                    theory_context += f"  Player Profile: {system.get('player_profile', '')}\n"
+
+        if football_hackers_hits:
+            theory_context += "\n\nFOOTBALL HACKERS PRINCIPLES:\n"
+            for hit in football_hackers_hits[:2]:  # Top 2 matching principles
+                text = hit.get("text", "")
+                source = hit.get("source", "")
+                if source == "football-hackers-context":
+                    theory_context += f"\n{text[:500]}\n"  # First 500 chars of each chunk
+
+        if not tactical_ref_hits and not football_hackers_hits:
+            theory_context = "No specific tactical systems or principles matched the query."
+
         _phase(
-            "3. Retrieve + compress tactical theory (Index A)",
+            "3. Retrieve tactical reference (YAML systems + Football Hackers context)",
             t,
-            input=f"Query vector | tactical concepts: {', '.join(tactical_concepts) if tactical_concepts else 'none — unfiltered'}",
-            output=f"{len(theory_hits)} chunk(s), compressed to query-relevant sentences",
+            input=f"Query string | tactical concepts: {', '.join(tactical_concepts) if tactical_concepts else 'none — unfiltered'}",
+            output=f"{len(tactical_ref_hits)} systems + {len(football_hackers_hits)} context chunks",
             why=(
-                "Chunks are tagged with tactical concepts (high_press, ball_progression, etc.) "
-                "at index time. We pre-filter by the concepts detected in your query "
-                f"({', '.join(tactical_concepts) if tactical_concepts else 'none — unfiltered'}), "
-                "so the search hits relevant chapters instead of random blocks. Then we keep only the "
-                "sentences in each chunk most relevant to the query (compression)."
+                "Combines YAML tactical systems with Football Hackers context pack. "
+                "Systems provide explicit metrics and player profiles; context provides "
+                "scouting principles and operational rules for decision-making."
             ),
-            count=len(theory_hits),
-            collection=THEORY_COLLECTION,
+            count=len(tactical_ref_hits) + len(football_hackers_hits),
+            collection="tactical-reference + football-hackers-context",
             tactical_concepts=tactical_concepts,
         )
 
-        # Phase 4 — Index B: hybrid retrieval. Pull a POOL (not just the final 3)
-        # so the stat re-rank in phase 5 has candidates to sort.
-        # Route to career aggregates if the query asks for progression/trends.
+        # Phase 4 — Index B: hybrid retrieval from blended collection
+        # One unified query returns both season-specific AND career metrics
         t = time.perf_counter()
         is_career = is_career_query(query_str)
-        collection_name = CAREER_COLLECTION if is_career else STATS_COLLECTION
-        search_type = "Career (3-year profiles)" if is_career else "Season-specific snapshot"
+        collection_name = "player_profiles_blended"
+        search_type = "Blended (season + career)"
 
-        if is_career:
-            # Career query: no season-specific filtering
-            raw_results, filter_note = self._retrieve_candidates_career(
-                query_vector,
-                eff_position,
-                stat_filters,
-                limit=25,
-            )
-            pool = raw_results  # Career results don't have _build_candidate wrapping
-            retrieval_msg = f"Query vector + filters (position={eff_position})"
-        else:
-            # Season-specific query
-            pool, filter_note = self._retrieve_candidates(
-                query_vector,
-                season,
-                eff_position,
-                eff_min_minutes,
-                stat_filters,
-                limit=25,
-            )
-            retrieval_msg = (
-                f"Query vector + filters (season={season}, position={eff_position}, "
-                f"min_minutes={eff_min_minutes}, "
-                f"stat_filters={stat_filters or '[]'}, exclude={exclude_display})"
-            )
+        # Query blended collection
+        # If career query: no season filter (return all seasons for analysis)
+        # If season query: filter to current season for form
+        query_season = None if is_career else season
 
-        # Exclude the club you're scouting for — you want external fits.
-        excluded_count = 0
-        if exclude_key and not is_career:
-            before = len(pool)
-            pool = [c for c in pool if normalize_club(c.get("current_club")) != exclude_key]
-            excluded_count = before - len(pool)
-        excl_note = f"; excluded {excluded_count} from {exclude_display}" if exclude_key and not is_career else ""
+        pool, filter_note = self._retrieve_candidates_blended(
+            query_vector,
+            eff_position,
+            stat_filters,
+            limit=25,
+            season=query_season,
+            exclude_club=exclude_key,
+        )
+
+        # Ensure all results have stats dict populated with all stat fields
+        stat_fields = [
+            "tackles", "tackles_won", "interceptions", "recoveries",
+            "assists", "goals", "xg", "xag", "prgc", "prgp",
+            "minutes", "appearances", "big_chances_created",
+            "improvement_score", "stability_score", "consistency_pct",
+        ]
+        for hit in pool:
+            if "stats" not in hit:
+                hit["stats"] = {}
+            # Populate stats dict from top-level fields (for blended records)
+            for field in stat_fields:
+                if field in hit and hit[field] is not None:
+                    hit["stats"][field] = hit[field]
+
+        retrieval_msg = (
+            f"Blended query (season={query_season}, position={eff_position}, "
+            f"stat_filters={stat_filters or '[]'}, exclude={exclude_display})"
+        )
+
+        excl_note = f"; excluded from {exclude_display}" if exclude_key else ""
         _phase(
-            "4. Retrieve candidate pool (Index B, hybrid)",
+            "4. Retrieve candidate pool (Blended collection)",
             t,
             input=retrieval_msg,
             output=f"{len(pool)} candidate(s) after filtering{excl_note}",
             why=(
                 "Milvus hybrid search: scalar filters FIRST, then cosine on results. "
-                f"Route: {search_type} ({collection_name}). "
+                f"Blended collection returns both season-specific + career metrics in one record. "
                 + (
-                    "Career aggregates span all seasons for trend analysis. "
+                    "Career query: no season filter, analyzes 3-year trends. "
                     if is_career
-                    else "Season-specific for current form analysis. "
+                    else f"Season query: filtered to {season} for current form. "
                     "Excludes players from the club you're scouting for. "
                 )
                 + f"Filters relax step-by-step if needed; applied: {filter_note}."
@@ -729,16 +1087,65 @@ class ScoutIntelRAG(dspy.Module):
         # Filter out rapidly declining players (momentum < -0.15 = 15% decline)
         # This surfaces improving/stable talent, not deteriorating players
         filtered = [c for c in ranked if (c.get("progression", {}).get("momentum") or 0) > -0.15]
-        candidates = (filtered or ranked)[:3]  # Fallback to unfiltered if all are declining
+        # Select top 5 from ranked pool (or unfiltered if all are declining)
+        # We retrieve 25 from DB, so 5 gives good coverage without overwhelming the user
+        candidates = (filtered or ranked)[:5]  # Expanded to 5 for better coverage
+
+        # Validate candidates have sufficient data for meaningful evaluation
+        # Filter out candidates with critical missing data
+        valid_candidates = []
+
+        for c in candidates:
+            # Check if candidate has meaningful stats or tactical data
+            has_stats = bool(c.get("stats") and len(c.get("stats", {})) > 0)
+            has_progression = bool(c.get("progression") or c.get("momentum") is not None)
+            has_position = c.get("position") and c.get("position") != "Unknown"
+
+            # Only include candidates with at least stats OR progression data AND position
+            if (has_stats or has_progression) and has_position:
+                valid_candidates.append(c)
+
+        # If we filtered out some candidates, keep the valid ones
+        # If all filtered out, fall back to original (with warning)
+        if valid_candidates:
+            candidates = valid_candidates
+        # else: keep original candidates but will show data quality warning
+
+        # Enrich results with missing fields (current_manager, estimated_cost, etc.)
+        # Blended collection already has all stats fields, no normalization needed
+        for c in candidates:
+            _enrich_candidate_defaults(c, season)
         # Aspect-scoped context: pass only the stat facets the query asked about.
         rank_columns = [rb["column"] for rb in rank_by]
         for c in candidates:
             c["context_profile"] = _focused_profile(c, rank_columns)
+        # Check if position was relaxed (important for explicit position queries)
+        position_was_relaxed = constraints.get("position") and "position relaxed" in filter_note.lower()
+
+        # Check if candidates have insufficient data for evaluation
+        candidates_with_incomplete_data = [
+            c for c in candidates
+            if not (c.get("stats") and len(c.get("stats", {})) > 0)
+            and not (c.get("progression") or c.get("momentum") is not None)
+        ]
+        has_data_quality_issue = bool(candidates_with_incomplete_data)
+
         retrieval = {
             "search_route": search_type,
             "collection": collection_name,
             "is_career_query": is_career,
             "filter_used": filter_note,
+            "position_was_relaxed": position_was_relaxed,
+            "position_relaxation_warning": (
+                f"⚠️ No {constraints.get('position', '?')} players found matching criteria. "
+                "Expanded search to all positions in this category. Results may include different roles."
+                if position_was_relaxed else ""
+            ),
+            "data_quality_warning": (
+                f"⚠️ {len(candidates_with_incomplete_data)} of {len(candidates)} candidates lack sufficient stats to evaluate "
+                "stability or improvement trajectory. Results may not fully match your criteria."
+                if has_data_quality_issue else ""
+            ),
             "result_count": len(candidates),
             "pool_size": len(pool),
             "min_minutes": eff_min_minutes,
@@ -825,7 +1232,7 @@ class ScoutIntelRAG(dspy.Module):
                 "reasoning": "",
                 "candidates": [],
                 "context_used": {
-                    "tactical_theory": theory_hits,
+                    "tactical_systems": tactical_ref_hits,
                     "player_records": [],
                 },
                 "retrieval": retrieval,
@@ -839,7 +1246,7 @@ class ScoutIntelRAG(dspy.Module):
 
         # Build metrics checklist to ground the LLM in actual player stats vs tactical requirements
         metrics_checklist = "\n".join(
-            f"{c['player_name']}:\n{build_metrics_checklist(tactical_concepts, c)}"
+            f"{c.get('player_name', 'Unknown')}:\n{build_metrics_checklist(tactical_concepts, c)}"
             for c in candidates
         )
 
@@ -912,7 +1319,7 @@ class ScoutIntelRAG(dspy.Module):
             "reasoning": getattr(prediction, "reasoning", ""),
             "candidates": candidates_with_enrichment,
             "context_used": {
-                "tactical_theory": theory_hits,
+                "tactical_systems": tactical_ref_hits,
                 "player_records": [c.get("context_profile") or c["stats_summary"] for c in candidates],
             },
             "similarity_plot": similarity_plot,

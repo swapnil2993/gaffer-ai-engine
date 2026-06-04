@@ -9,6 +9,7 @@ from backend.app.database import (
     EMBEDDING_MODEL_NAME,
     STATS_COLLECTION,
     THEORY_COLLECTION,
+    CAREER_COLLECTION,
     VECTOR_DIM,
     count_entities,
     init_collections,
@@ -17,6 +18,7 @@ from backend.app.engine import ScoutIntelRAG, _lm_name, init_dspy, is_dspy_ready
 from backend.app.schemas import EvalRequest
 from backend.app.services.theory import build_theory_html
 from backend.app.services.evaluation import evaluate_scouting_brief
+from backend.app.tactical_reference import get_system_info as get_tactical_reference_info
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -54,14 +56,30 @@ async def system_status():
                 "name": STATS_COLLECTION,
                 "rows": count_entities(STATS_COLLECTION),
                 "description": "Per-player season stats (Index B)",
+                "coverage": "All 3 seasons: 2023/24 (1019), 2024/25 (574), 2025/26 (573)",
             },
-            "tactical_theory": {
-                "name": THEORY_COLLECTION,
-                "rows": count_entities(THEORY_COLLECTION),
-                "description": "Chunks of 'The Inverted Pyramid' (Index A)",
+            "player_career": {
+                "name": CAREER_COLLECTION,
+                "rows": count_entities(CAREER_COLLECTION),
+                "description": "Multi-season career profiles (Index C)",
+                "coverage": "Players with 2+ seasons for trajectory analysis",
             },
         },
+        "tactical_reference": get_tactical_reference_info(),
         "seasons": ["2023/2024", "2024/2025", "2025/2026"],
+        "data_sources": {
+            "player_stats_23-24.csv": "1019 players with defensive stats (Tkl, Int)",
+            "fbref_PL_2024-25.csv": "574 players with full season metrics",
+            "merged_25_26.csv": "573 players from merged stats + defensive data",
+            "player_wages.csv": "562 players with annual/weekly wages",
+            "managers.csv": "Manager profiles and playing styles",
+        },
+        "position_granularity": {
+            "defenders": "CB (centre-back), LB (left-back), RB (right-back), LWB, RWB",
+            "midfielders": "CM (central), DM (defensive), AM (attacking)",
+            "forwards": "ST (striker), IF (inside forward), W (winger)",
+            "inference": "Inferred from Tackles Won + Interceptions intensity",
+        },
         "llm": {"ready": is_dspy_ready(), "model": _lm_name()},
         "pipeline": [
             "1. Embed query (384-d vector space)",
@@ -72,12 +90,6 @@ async def system_status():
             "6. Enrich with reference data (manager, wages, career)",
             "7. Project to 2D (PCA similarity visualization)",
             "8. Generate brief (DSPy ChainOfThought)",
-        ],
-        "optional_enhancements": [
-            "Calculate career progression (momentum, consistency, trend)",
-            "Compute impact analysis (why each player ranked here)",
-            "Score with DeepEval (faithfulness, relevancy)",
-            "Show filter relaxation ladder (when initial filters return 0)",
         ],
     }
 
@@ -113,18 +125,43 @@ async def search_scouting_reports(
     try:
         result = scout_engine(query_str, season)
         return {
-            "tactical_query": query_str,
-            "season_override": season,
-            "inferred_from_query": {
-                "note": "Position, player name, and club are extracted from query text in Phase 2"
+            # QUERY CONTEXT
+            "query": {
+                "tactical_query": query_str,
+                "season_override": season,
+                "inferred_from_query": {
+                    "note": "Position, player name, and club are extracted from query text in Phase 2"
+                },
             },
-            "retrieval": result["retrieval"],
-            "phases": result["phases"],
-            "similarity_plot": result.get("similarity_plot"),
-            "scouting_brief": result["scouting_brief"],
-            "reasoning": result["reasoning"],
-            "candidates": result["candidates"],
+
+            # SCOUTING BRIEF - Pure narrative (no candidate cards)
+            "brief": {
+                "narrative": result["scouting_brief"],
+                "reasoning": result["reasoning"],
+            },
+
+            # RETRIEVED & ENRICHED CANDIDATES - Full structured data
+            "candidates": {
+                "retrieved_and_enriched": result["candidates"],
+                "count": len(result["candidates"]),
+            },
+
+            # RETRIEVAL & RANKING ANALYSIS
+            "analysis": {
+                "retrieval_strategy": result["retrieval"],
+                "similarity_plot": result.get("similarity_plot"),
+            },
+
+            # EXPLAINABILITY - All 15 improvements
+            "explainability": result.get("explainability", {}),
+
+            # CONTEXT USED
             "context_used": result["context_used"],
+
+            # 8-PHASE PIPELINE TRACE
+            "phases": result["phases"],
+
+            # DATA NOTES
             "notes": {
                 "manager": "Manager and playing style are season-aware values from managers.csv.",
                 "cost": "Cost reflects current wages; transfer fees are not in the dataset.",

@@ -242,10 +242,105 @@ CAREER_OUTPUT_FIELDS = [
     "avg_assists",
     "avg_prgp",
     "avg_tackles",
+    "avg_tackles_won",
+    "avg_interceptions",
     "best_season",
     "trend",
     "momentum",
+    "improvement_score",
+    "stability_score",
+    "consistency_pct",
 ]
+
+
+def _build_position_filter(position: str) -> str:
+    """Build a Milvus filter for position that matches variants intelligently.
+
+    Defensive positions:
+    - "CB" → CB, LCB, RCB (centre backs only, not fullbacks)
+    - "LB" → LB, LWB (left side only)
+    - "RB" → RB, RWB (right side only)
+    - "DF" → all defensive positions (CB, LB, RB, LWB, RWB)
+
+    Midfielder positions:
+    - "DM" → defensive midfielder
+    - "CM" → central midfielder / box-to-box
+    - "AM" → attacking midfielder / playmaker
+    - "W" → winger (left or right)
+    - "MF" → all midfielder positions
+
+    Forward positions:
+    - "ST" → striker / centre-forward
+    - "IF" → inside forward / false nine
+    - "W" → winger
+    - "FW" → all forward positions
+
+    Other:
+    - "GK" → goalkeeper
+    """
+    pos = position.upper().strip()
+
+    # Centre back variants (CB, LCB, RCB - NOT fullbacks)
+    # Note: Older datasets (2023/24) may only have generic 'DF' and won't match specific 'CB'
+    if pos == "CB":
+        return "(position == 'CB' or position == 'LCB' or position == 'RCB')"
+
+    # Left back / left side (LB, LWB - NOT centre backs)
+    if pos == "LB":
+        return "(position == 'LB' or position == 'LWB')"
+
+    # Right back / right side (RB, RWB - NOT centre backs)
+    if pos == "RB":
+        return "(position == 'RB' or position == 'RWB')"
+
+    # Generic defender (all defensive positions)
+    if pos == "DF":
+        return "(position like '%DF%' or position == 'CB' or position == 'LCB' or position == 'RCB' or position == 'LB' or position == 'RB' or position == 'LWB' or position == 'RWB')"
+
+    # Specific midfielder types
+    # Defensive midfielder (CDM, RDM, LDM, DM)
+    if pos == "DM":
+        return "(position == 'DM' or position == 'CDM' or position == 'RDM' or position == 'LDM')"
+
+    # Attacking midfielder (CAM, RAM, LAM, AM)
+    if pos == "AM":
+        return "(position == 'AM' or position == 'CAM' or position == 'RAM' or position == 'LAM')"
+
+    # Central midfielder (CM, RCM, LCM)
+    if pos == "CM":
+        return "(position == 'CM' or position == 'RCM' or position == 'LCM')"
+
+    # Winger (LW, RW, W - NOT wing-backs)
+    if pos == "W":
+        return "(position == 'W' or position == 'LW' or position == 'RW')"
+
+    # Generic midfielder (all midfielder positions)
+    if pos == "MF":
+        return "(position like '%MF%' or position == 'CM' or position == 'RCM' or position == 'LCM' or position == 'DM' or position == 'CDM' or position == 'RDM' or position == 'LDM' or position == 'AM' or position == 'CAM' or position == 'RAM' or position == 'LAM' or position == 'W' or position == 'LW' or position == 'RW')"
+
+    # Specific forward types
+    # Striker / centre-forward (ST, CF, RW/LW when used as forward)
+    if pos == "ST":
+        return "(position == 'ST' or position == 'CF' or position == 'RCF' or position == 'LCF')"
+
+    # Inside forward (IF, RIF, LIF)
+    if pos == "IF":
+        return "(position == 'IF' or position == 'RIF' or position == 'LIF')"
+
+    # Winger (LW, RW, W - when used as forward)
+    if pos == "W":
+        return "(position == 'W' or position == 'LW' or position == 'RW')"
+
+    # Generic forward (all forward positions)
+    if pos == "FW":
+        return "(position like '%FW%' or position == 'ST' or position == 'CF' or position == 'RCF' or position == 'LCF' or position == 'IF' or position == 'RIF' or position == 'LIF' or position == 'W' or position == 'LW' or position == 'RW')"
+
+    # Generic goalkeeper
+    if pos == "GK":
+        return "(position like '%GK%')"
+
+    # Fallback for unknown positions
+    return f"(position like '%{_escape_literal(pos)}%')"
 
 
 def query_stats(
@@ -255,6 +350,7 @@ def query_stats(
     player_name: str = None,
     min_minutes: float = None,
     stat_filters: list = None,
+    exclude_club: str = None,
     limit: int = 5,
 ) -> list:
     """Queries the player stats collection — hybrid: vector + scalar filters.
@@ -263,6 +359,7 @@ def query_stats(
       - season: exact match
       - position / player_name: substring (`like`), so 'MF' matches 'MF,FW'
       - min_minutes: numeric floor (filters out tiny-sample noise)
+      - exclude_club: exclude players from this club (applied IN the query, not post-processing)
       - stat_filters: extra Milvus expressions, e.g. ["goals >= 10"]
     All are optional.
     """
@@ -271,14 +368,20 @@ def query_stats(
     if season:
         clauses.append(f"season == '{_escape_literal(season)}'")
     if position:
-        clauses.append(f"position like '%{_escape_literal(position)}%'")
+        pos_filter = _build_position_filter(position)
+        clauses.append(pos_filter)
+        # Debug: log the position filter being applied
+        print(f"[DEBUG] Position filter for '{position}': {pos_filter}")
     if player_name:
         clauses.append(f"player_name like '%{_escape_literal(player_name)}%'")
     if min_minutes:
         clauses.append(f"minutes >= {float(min_minutes)}")
+    if exclude_club:
+        clauses.append(f"current_club != '{_escape_literal(exclude_club)}'")
     if stat_filters:
         clauses.extend(stat_filters)
     filter_expr = " and ".join(clauses)
+    print(f"[DEBUG] Full filter expression: {filter_expr}")
 
     results = client.search(
         collection_name=STATS_COLLECTION,
@@ -287,6 +390,24 @@ def query_stats(
         limit=limit,
         output_fields=STAT_OUTPUT_FIELDS,
     )
+
+    # Post-retrieval validation: filter results to ensure they match position criteria
+    if position and results:
+        filtered_results = []
+        expected_filter = _build_position_filter(position)
+        for result in (results[0] if results else []):
+            result_pos = result.get("position", "").upper()
+            # Simple check: see if the position appears in the filter (is allowed)
+            # This is a safety net in case the database filter didn't work correctly
+            if result_pos and (result_pos in expected_filter.upper() or expected_filter.upper() in result_pos):
+                filtered_results.append(result)
+
+        if filtered_results:
+            return filtered_results
+        # If all filtered out, return original (will show warning to user)
+        print(f"[DEBUG] Position validation filtered out all results. Original count: {len(results[0] if results else [])}")
+        return results[0] if results else []
+
     return results[0] if results else []
 
 
@@ -295,6 +416,7 @@ def query_career(
     position: str = None,
     player_name: str = None,
     stat_filters: list = None,
+    exclude_club: str = None,
     limit: int = 5,
 ) -> list:
     """Queries the player career aggregate collection — hybrid: vector + scalar filters.
@@ -305,9 +427,11 @@ def query_career(
     client = get_client()
     clauses = []
     if position:
-        clauses.append(f"position like '%{_escape_literal(position)}%'")
+        clauses.append(_build_position_filter(position))
     if player_name:
         clauses.append(f"player_name like '%{_escape_literal(player_name)}%'")
+    if exclude_club:
+        clauses.append(f"best_squad != '{_escape_literal(exclude_club)}'")
     if stat_filters:
         clauses.extend(stat_filters)
     filter_expr = " and ".join(clauses)
@@ -319,6 +443,23 @@ def query_career(
         limit=limit,
         output_fields=CAREER_OUTPUT_FIELDS,
     )
+
+    # Post-retrieval validation: filter results to ensure they match position criteria
+    if position and results:
+        filtered_results = []
+        expected_filter = _build_position_filter(position)
+        for result in (results[0] if results else []):
+            result_pos = result.get("position", "").upper()
+            # Simple check: see if the position appears in the filter (is allowed)
+            if result_pos and (result_pos in expected_filter.upper() or expected_filter.upper() in result_pos):
+                filtered_results.append(result)
+
+        if filtered_results:
+            return filtered_results
+        # If all filtered out, return original (will show warning to user)
+        print(f"[DEBUG] Career position validation filtered out all results. Original count: {len(results[0] if results else [])}")
+        return results[0] if results else []
+
     return results[0] if results else []
 
 
@@ -353,7 +494,7 @@ def fetch_player_vectors(
     if season:
         clauses.append(f"season == '{_escape_literal(season)}'")
     if position:
-        clauses.append(f"position like '%{_escape_literal(position)}%'")
+        clauses.append(_build_position_filter(position))
     if player_names:
         joined = ", ".join('"' + n.replace("\\", "\\\\").replace('"', '\\"') + '"' for n in player_names)
         clauses.append(f"player_name in [{joined}]")

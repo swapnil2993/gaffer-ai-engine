@@ -110,24 +110,34 @@ def build_metrics_checklist(tactics: List[str], candidate: Dict) -> str:
 
     # Add career context if available
     progression = candidate.get("progression", {})
-    if progression and progression.get("trend"):
-        lines.append("\nCAREER TRAJECTORY:")
+    if progression and (progression.get("trend") or progression.get("improvement_score") or progression.get("stability_score")):
+        lines.append("\nCAREER METRICS:")
         trend = progression.get("trend", "unknown")
         momentum = progression.get("momentum", 0)
         momentum_str = f"{momentum*100:+.0f}%" if momentum is not None else "N/A"
 
         if trend == "improving":
-            lines.append(f"  - Direction: IMPROVING {momentum_str} YoY ✓")
+            lines.append(f"  - Trajectory: IMPROVING {momentum_str} YoY ✓")
         elif trend == "declining":
-            lines.append(f"  - Direction: DECLINING {momentum_str} YoY ✗")
+            lines.append(f"  - Trajectory: DECLINING {momentum_str} YoY ✗")
         else:
-            lines.append(f"  - Direction: STABLE {momentum_str} YoY →")
+            lines.append(f"  - Trajectory: STABLE {momentum_str} YoY →")
 
-        consistency = progression.get("yoy_changes", {})
-        if consistency:
-            avg_yoy = sum(consistency.values()) / len(consistency) if consistency else 0
-            consistency_pct = f"{abs(avg_yoy)*100:.0f}%"
-            lines.append(f"  - Consistency: {progression.get('consistency', 'variable')}")
+        # Add explicit progression scores (from blended data)
+        improvement_score = progression.get("improvement_score", 0)
+        if improvement_score is not None and improvement_score > 0:
+            improvement_pct = f"{improvement_score*100:.0f}%" if isinstance(improvement_score, (int, float)) and improvement_score < 2 else str(improvement_score)
+            lines.append(f"  - Improvement: {improvement_pct} ✓")
+
+        stability_score = progression.get("stability_score", 0)
+        if stability_score is not None and stability_score > 0:
+            stability_pct = f"{stability_score*100:.0f}%" if isinstance(stability_score, (int, float)) and stability_score < 2 else str(stability_score)
+            lines.append(f"  - Stability: {stability_pct} ✓")
+
+        consistency_pct = progression.get("consistency_pct", 0)
+        if consistency_pct is not None and consistency_pct > 0:
+            consistency_str = f"{consistency_pct:.0f}%" if isinstance(consistency_pct, (int, float)) else str(consistency_pct)
+            lines.append(f"  - Consistency: {consistency_str} ✓")
 
     # If no matching metrics were found, return a helpful message
     if not has_matching_metrics:

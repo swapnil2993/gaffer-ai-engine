@@ -24,13 +24,12 @@ def run_cleaning_pipeline(verbose: bool = True) -> dict:
 
     results = {}
 
-    # Step 1: Repair CSVs
-    if verbose:
-        print("Step 1/3: Repair CSV structure...")
-        print("-" * 70)
-    csv_repair.run()
-    results["csv_repair"] = "complete"
-    print()
+    # Step 1: Repair CSVs (SKIPPED - data already cleaned with granular positions)
+    # if verbose:
+    #     print("Step 1/3: Repair CSV structure...")
+    #     print("-" * 70)
+    # csv_repair.run()
+    results["csv_repair"] = "skipped"
 
     # Step 2: Add defensive stats
     if verbose:
@@ -40,13 +39,12 @@ def run_cleaning_pipeline(verbose: bool = True) -> dict:
     results["defensive_stats"] = "complete"
     print()
 
-    # Step 3: Assign missing wages
-    if verbose:
-        print("Step 3/3: Assign wages to missing players...")
-        print("-" * 70)
-    wage_assignment.run()
-    results["wage_assignment"] = "complete"
-    print()
+    # Step 3: Assign missing wages (SKIPPED - raw data structure issues)
+    # if verbose:
+    #     print("Step 3/3: Assign wages to missing players...")
+    #     print("-" * 70)
+    # wage_assignment.run()
+    results["wage_assignment"] = "skipped"
 
     if verbose:
         print("=" * 70)

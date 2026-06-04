@@ -36,65 +36,56 @@ _CAREER_KEYWORDS = (
     "multi-year",
     "over time",
     "this season vs",
+    "upward trajectory",
+    "upward curve",
+    "year-on-year",
+    "baseline",
+    "historically",
 )
 
-# Most specific position words first.
+# Most specific position words first (longest matches first to avoid partial matches).
 _POSITION_KEYWORDS = [
     (("goalkeeper", "keeper", "shot-stopper", "goalie", "number 1"), "GK"),
+    # Centre backs: be specific (handle both British and American spellings)
+    (("centre-back", "center-back", "centre back", "center back", "centre half", "cb"), "CB"),
+    # Fullbacks: left side
+    (("left-back", "leftback", "left back", "lb"), "LB"),
+    # Fullbacks: right side
+    (("right-back", "rightback", "right back", "rb"), "RB"),
+    # Wing-backs
+    (("wing-back", "wingback", "wing back", "lwb", "rwb"), "LWB"),
+    # Generic defender (maps to multiple positions via filter relaxation)
     (
         (
             "defender",
-            "centre-back",
-            "center-back",
-            "centre back",
-            "centre half",
             "full-back",
             "fullback",
             "full back",
-            "right-back",
-            "left-back",
-            "wing-back",
-            "wingback",
             "back four",
             "defensive line",
         ),
         "DF",
     ),
-    (
-        (
-            "midfielder",
-            "midfield",
-            "playmaker",
-            "box-to-box",
-            "box to box",
-            "deep-lying",
-            "regista",
-            "pivot",
-            "number 8",
-            "number 6",
-            "number 10",
-            "holding mid",
-            "central mid",
-        ),
-        "MF",
-    ),
-    (
-        (
-            "striker",
-            "forward",
-            "winger",
-            "centre-forward",
-            "center-forward",
-            "centre forward",
-            "attacker",
-            "number 9",
-            "wide forward",
-            "front man",
-            "frontman",
-            "false nine",
-        ),
-        "FW",
-    ),
+    # Specific midfielder types
+    # Defensive midfielder / holding midfielder
+    (("deep-lying", "holding mid", "regista", "pivot", "number 6", "dm", "defensive mid", "defensive-minded"), "DM"),
+    # Attacking midfielder / playmaker
+    (("playmaker", "number 10", "attacking mid", "am", "creative"), "AM"),
+    # Central midfielder / box-to-box
+    (("box-to-box", "box to box", "number 8", "central mid", "cm"), "CM"),
+    # Winger (can be MF or FW depending on formation)
+    (("left winger", "right winger", "lw", "rw"), "W"),
+    # Generic midfielder
+    (("midfielder", "midfield"), "MF"),
+    # Specific forward types
+    # Striker / centre-forward
+    (("striker", "centre-forward", "center-forward", "centre forward", "number 9", "st"), "ST"),
+    # Inside forward / false nine
+    (("inside forward", "false nine", "false-nine", "if"), "IF"),
+    # Winger (can be FW or MF)
+    (("winger",), "W"),
+    # Generic forward/attacker
+    (("forward", "attacker", "front man", "frontman"), "FW"),
 ]
 
 # Qualitative concept -> stat columns to RANK by (label shown in the UI).
@@ -155,8 +146,12 @@ _CONCEPT_COLUMNS = [
             "progressive carr",
             "ball-carrying",
             "ball carrying",
+            "gets forward",
+            "get forward",
+            "supports attack",
+            "attacking contribution",
         ),
-        [("prgc", "Progressive carries")],
+        [("prgc", "Progressive carries"), ("prgp", "Progressive passes")],
     ),
     (
         (
@@ -180,6 +175,8 @@ _CONCEPT_COLUMNS = [
             "recoveries",
             "recover possession",
             "recover the ball",
+            "recovery",
+            "recovery run",
             "screen the defen",
             # pressing & transition vocabulary (defensive transition = win the ball back)
             "press",
@@ -200,6 +197,9 @@ _CONCEPT_COLUMNS = [
             "win possession",
             "winning possession",
             "press resistant",
+            "work rate",
+            "work hard",
+            "works hard",
         ),
         [
             ("tackles_won", "Tackles won"),
@@ -214,6 +214,20 @@ _CONCEPT_COLUMNS = [
     ),
     (
         (
+            "1v1 defending",
+            "1v1",
+            "one-on-one",
+            "one on one",
+            "duel",
+            "dueling",
+            "individual defending",
+            "man-marking",
+            "marking",
+        ),
+        [("tackles", "Tackles"), ("tackles_won", "Tackles won"), ("interceptions", "Interceptions")],
+    ),
+    (
+        (
             "experienced",
             "regular starter",
             "ever-present",
@@ -223,6 +237,41 @@ _CONCEPT_COLUMNS = [
             "mainstay",
         ),
         [("minutes", "Minutes"), ("appearances", "Appearances")],
+    ),
+    (
+        (
+            "improving",
+            "improvement",
+            "improving over time",
+            "getting better",
+            "development",
+            "trajectory",
+            "momentum",
+            "progress",
+            "upward trend",
+            "on an upward curve",
+            "not regressing",
+            "consistency",
+            "consistent",
+            "stable",
+            "reliable",
+            "over 3 years",
+            "over time",
+            "long-term",
+            "young",
+            "emerging",
+            "rising star",
+            "rising",
+            "growing",
+            "growth",
+            "improvement trend",
+            "improved",
+            "getting stronger",
+            "development trajectory",
+            "craft",
+            "form trajectory",
+        ),
+        [("improvement_score", "Improvement"), ("stability_score", "Stability"), ("consistency_pct", "Consistency")],
     ),
 ]
 
@@ -263,6 +312,11 @@ TACTICAL_CONCEPTS = {
         "defensive work",
         "harry",
         "hound",
+        "high press",
+        "work rate",
+        "work hard",
+        "recovery run",
+        "1v1 defending",
     ),
     "Build-up & possession": (
         "build-up",
@@ -335,6 +389,38 @@ TACTICAL_CONCEPTS = {
         "sweeper",
         "libero",
         "compact",
+        "defensive intensity",
+        "defensive solidity",
+        "1v1",
+    ),
+    "Attacking fullback / wing-back": (
+        "fullback",
+        "full-back",
+        "left-back",
+        "right-back",
+        "wing-back",
+        "wingback",
+        "gets forward",
+        "attacking fullback",
+        "progressive",
+        "assist",
+        "inverted",
+    ),
+    "Player development & consistency": (
+        "young",
+        "emerging",
+        "rising star",
+        "improving",
+        "trajectory",
+        "growth",
+        "consistent",
+        "stable",
+        "reliable",
+        "improvement",
+        "development",
+        "veteran",
+        "experienced",
+        "established",
     ),
 }
 
@@ -402,8 +488,19 @@ def is_career_query(query: str) -> bool:
 
 def _detect_position(q: str) -> Optional[str]:
     for words, code in _POSITION_KEYWORDS:
-        if any(w in q for w in words):
-            return code
+        # Use word boundary matching to avoid false matches (e.g., "rw" in "forward")
+        # For multi-word keywords (e.g., "center back"), don't require trailing boundary
+        # since the plural form "center backs" would otherwise not match
+        for w in words:
+            # Start with word boundary; for end, check if it's multi-word
+            if " " in w or "-" in w:
+                # Multi-word keyword: match start boundary, but allow trailing inflections
+                if re.search(rf'\b{re.escape(w)}', q):
+                    return code
+            else:
+                # Single word: use full word boundary matching
+                if re.search(rf'\b{re.escape(w)}\b', q):
+                    return code
     return None
 
 
@@ -412,6 +509,7 @@ def _find_threshold(q: str, words) -> Optional[int]:
         for pat in [
             rf"(?:more than|over|at least|minimum(?: of)?|min|upwards of|north of)\s+(\d+)\+?\s+{w}\b",
             rf"\b(\d+)\s*\+\s*{w}\b",
+            rf"(?:{w}\s*)?\((\d+)\+?\)",  # Handle "goals (5+)" format
             rf"\b(\d+)\s+or\s+more\s+{w}\b",
             rf"(?:scored|netted|notched|with|having|registered)\s+(\d+)\s+{w}\b",
             rf"\b(\d+)\s+{w}\b",

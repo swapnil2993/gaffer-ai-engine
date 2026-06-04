@@ -118,17 +118,62 @@ const EvalScorecard = ({ data }) => (
 // ---------- system / indexing status ----------
 const SystemBar = ({ sys }) => {
   if (!sys) return null;
-  const stats = sys.collections?.player_stats?.rows ?? '—';
-  const theory = sys.collections?.tactical_theory?.rows ?? '—';
+  const collections = sys.collections || {};
+  const playerStats = collections.player_stats?.rows ?? '—';
+  const career = collections.player_career?.rows ?? '—';
+  const tacticalRef = sys.tactical_reference || {};
+
   return (
-    <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
-      <span className="flex items-center gap-1.5"><Database className="w-4 h-4" /> {sys.vector_store}</span>
-      <span className="flex items-center gap-1.5"><Layers className="w-4 h-4" /> {sys.embedding_model} · {sys.vector_dim}d</span>
-      <Pill tone="green">{stats} player rows</Pill>
-      <Pill tone="green">{theory} theory chunks</Pill>
-      <span className={`flex items-center gap-1.5 ${sys.llm?.ready ? 'text-green-400' : 'text-red-400'}`}>
-        <Brain className="w-4 h-4" /> {sys.llm?.ready ? sys.llm.model : 'LLM not configured'}
-      </span>
+    <div className="space-y-3">
+      {/* Header */}
+      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-400">
+        <span className="flex items-center gap-1.5"><Database className="w-4 h-4" /> {sys.vector_store}</span>
+        <span className="flex items-center gap-1.5"><Layers className="w-4 h-4" /> {sys.embedding_model} · {sys.vector_dim}d</span>
+        <span className={`flex items-center gap-1.5 ${sys.llm?.ready ? 'text-green-400' : 'text-red-400'}`}>
+          <Brain className="w-4 h-4" /> {sys.llm?.ready ? sys.llm.model : 'LLM not configured'}
+        </span>
+      </div>
+
+      {/* Collections Grid */}
+      <div className="grid grid-cols-3 gap-2 text-xs">
+        {/* Player Stats Collection */}
+        <div className="bg-blue-500/10 border border-blue-500/20 rounded p-2">
+          <div className="font-semibold text-blue-300 mb-1">Player Stats</div>
+          <div className="text-blue-200 text-sm font-bold mb-1">{playerStats}</div>
+          <div className="text-blue-400 text-[10px]">3 seasons</div>
+          <div className="text-blue-400 text-[10px]">Season-specific stats</div>
+        </div>
+
+        {/* Career Collection */}
+        <div className="bg-purple-500/10 border border-purple-500/20 rounded p-2">
+          <div className="font-semibold text-purple-300 mb-1">Career Profiles</div>
+          <div className="text-purple-200 text-sm font-bold mb-1">{career}</div>
+          <div className="text-purple-400 text-[10px]">Multi-season</div>
+          <div className="text-purple-400 text-[10px]">Trajectory analysis</div>
+        </div>
+
+        {/* Tactical Reference */}
+        <div className="bg-green-500/10 border border-green-500/20 rounded p-2">
+          <div className="font-semibold text-green-300 mb-1">Tactical Reference</div>
+          <div className="text-green-200 text-sm font-bold mb-1">{tacticalRef.count ?? '—'}</div>
+          <div className="text-green-400 text-[10px]">Tactical systems</div>
+          <div className="text-green-400 text-[10px]">Structured profiles</div>
+        </div>
+      </div>
+
+      {/* Data Sources */}
+      {sys.data_sources && (
+        <div className="border-t border-white/10 pt-2">
+          <div className="text-[10px] uppercase tracking-wider text-gray-500 mb-1">Data Sources</div>
+          <div className="grid grid-cols-2 gap-1 text-[10px] text-gray-400">
+            {Object.entries(sys.data_sources).map(([file, desc]) => (
+              <div key={file} className="text-gray-400">
+                <span className="text-scout-gold">{file.split('.')[0]}:</span> {desc}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 };
@@ -170,11 +215,17 @@ const PhaseCard = ({ phase, last }) => (
 );
 
 // ---------- candidate player card ----------
-const CandidateCard = ({ c }) => (
+const CandidateCard = ({ c }) => {
+  // Fallback: extract player name from stats_summary if not directly available
+  const playerName = c.player_name || (
+    c.stats_summary ? c.stats_summary.split('\n')[0] : 'Unknown'
+  );
+
+  return (
   <Card className="p-4">
     <div className="flex justify-between items-start mb-2">
       <div>
-        <h4 className="font-bold text-base">{c.player_name}</h4>
+        <h4 className="font-bold text-base">{playerName}</h4>
         <div className="text-xs text-gray-400">{c.position} · {c.current_club}</div>
         {c.progression_summary && (
           <div className={`text-xs mt-1 font-semibold ${
@@ -191,15 +242,18 @@ const CandidateCard = ({ c }) => (
       )}
     </div>
     <div className="space-y-1.5 text-xs text-gray-300">
-      <div className="flex items-center gap-2">
-        <UserCog className="w-3.5 h-3.5 text-scout-gold shrink-0" />
-        <span>{c.current_manager || 'Manager unknown'}{c.manager_playing_style ? ` — ${c.manager_playing_style}` : ''}</span>
-      </div>
-      <div className="flex items-center gap-2">
-        <Coins className="w-3.5 h-3.5 text-scout-gold shrink-0" />
-        <span>{c.estimated_cost?.annual_wages ? `${c.estimated_cost.annual_wages}/yr` : 'Wage unknown'}
-          {c.estimated_cost?.weekly_wages ? ` (${c.estimated_cost.weekly_wages}/wk)` : ''}</span>
-      </div>
+      {(c.current_manager || c.manager_playing_style) && (
+        <div className="flex items-center gap-2">
+          <UserCog className="w-3.5 h-3.5 text-scout-gold shrink-0" />
+          <span>{c.current_manager || 'Manager TBD'}{c.manager_playing_style ? ` — ${c.manager_playing_style}` : ''}</span>
+        </div>
+      )}
+      {(c.estimated_cost?.annual_wages || c.estimated_cost?.weekly_wages) && (
+        <div className="flex items-center gap-2">
+          <Coins className="w-3.5 h-3.5 text-scout-gold shrink-0" />
+          <span>{c.estimated_cost?.annual_wages ? `${c.estimated_cost.annual_wages}/yr` : ''}{c.estimated_cost?.annual_wages && c.estimated_cost?.weekly_wages ? ' ' : ''}{c.estimated_cost?.weekly_wages ? `(${c.estimated_cost.weekly_wages}/wk)` : ''}</span>
+        </div>
+      )}
     </div>
     {(c.manager_tactics?.length > 0 || c.tactical_suitability?.length > 0) && (
       <div className="mt-3 pt-3 border-t border-white/10 space-y-2">
@@ -250,7 +304,8 @@ const CandidateCard = ({ c }) => (
     )}
     <p className="mt-2 text-[11px] text-gray-500 leading-snug">{c.stats_summary}</p>
   </Card>
-);
+  );
+};
 
 // ---------- cosine similarity scatter ----------
 const TYPE_STYLE = {
@@ -377,7 +432,7 @@ const App = () => {
       setReport(r.data);
       axios.get(`${API}/system`).then((res) => setSys(res.data)).catch(() => {});
       // Auto-run the DeepEval correctness scoring (only if a brief was produced).
-      if (r.data?.candidates?.length > 0) handleEvaluate(r.data);
+      if (r.data?.candidates?.retrieved_and_enriched?.length > 0) handleEvaluate(r.data);
     } catch (err) {
       const detail = err.response?.data?.detail || 'Failed to fetch. Is the backend running on :8000?';
       setError(formatError(detail));
@@ -395,8 +450,8 @@ const App = () => {
         ...(rep.context_used?.player_records?.map(p => typeof p === 'string' ? p : p.stats_summary) || []),
       ];
       const r = await axios.post(`${API}/evaluate`, {
-        query: rep.tactical_query,
-        scouting_brief: rep.scouting_brief,
+        query: rep.query?.tactical_query || rep.tactical_query,
+        scouting_brief: rep.brief?.narrative || rep.scouting_brief,
         context,
       });
       setEvalState({ loading: false, data: r.data, error: null });
@@ -428,7 +483,7 @@ const App = () => {
               <Search className="w-5 h-5 text-scout-gold" /> Query Understanding
             </h2>
             <textarea
-              className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-sm focus:ring-2 focus:ring-scout-gold outline-none h-28 mb-4"
+              className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-sm focus:ring-2 focus:ring-scout-gold outline-none h-48 mb-4 resize-vertical"
               placeholder="Describe the player profile / tactical need (position, specific player, and club are inferred from query)…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
@@ -450,25 +505,25 @@ const App = () => {
             </button>
           </Card>
 
-          {report?.retrieval && (
+          {report?.analysis?.retrieval_strategy && (
             <Card className="p-4 text-xs text-gray-400">
               <div className="uppercase tracking-wider text-gray-500 mb-3">Search Strategy</div>
               <div className="space-y-2">
-                {report.retrieval.search_route && (
+                {report.analysis.retrieval_strategy.search_route && (
                   <div>
                     <span className="text-gray-500">route:</span>
-                    <Pill tone={report.retrieval.is_career_query ? 'gold' : 'gray'} className="ml-2">
-                      {report.retrieval.search_route}
+                    <Pill tone={report.analysis.retrieval_strategy.is_career_query ? 'gold' : 'gray'} className="ml-2">
+                      {report.analysis.retrieval_strategy.search_route}
                     </Pill>
                   </div>
                 )}
-                <div>filter used: <span className="text-gray-200">{report.retrieval.filter_used}</span></div>
-                <div>candidates: <span className="text-gray-200">{report.retrieval.result_count} / {report.retrieval.pool_size} pool</span></div>
-                {report.retrieval.ranked_by?.length > 0 && (
-                  <div>ranked by: <span className="text-gray-200">{report.retrieval.ranked_by.join(', ')}</span></div>
+                <div>filter used: <span className="text-gray-200">{report.analysis.retrieval_strategy.filter_used}</span></div>
+                <div>candidates: <span className="text-gray-200">{report.analysis.retrieval_strategy.result_count} / {report.analysis.retrieval_strategy.pool_size} pool</span></div>
+                {report.analysis.retrieval_strategy.ranked_by?.length > 0 && (
+                  <div>ranked by: <span className="text-gray-200">{report.analysis.retrieval_strategy.ranked_by.join(', ')}</span></div>
                 )}
-                {report.retrieval.excluded_club && (
-                  <div>excluding own club: <span className="text-scout-gold">{report.retrieval.excluded_club}</span></div>
+                {report.analysis.retrieval_strategy.excluded_club && (
+                  <div>excluding own club: <span className="text-scout-gold">{report.analysis.retrieval_strategy.excluded_club}</span></div>
                 )}
               </div>
             </Card>
@@ -519,16 +574,16 @@ const App = () => {
               </Card>
 
               {/* Similarity scatter */}
-              <SimilarityScatter plot={report.similarity_plot} />
+              <SimilarityScatter plot={report.analysis?.similarity_plot} />
 
               {/* Candidates */}
-              {report.candidates?.length > 0 && (
+              {report.candidates?.retrieved_and_enriched?.length > 0 && (
                 <div>
                   <h3 className="text-sm font-bold text-scout-gold uppercase mb-3 flex items-center gap-2">
                     <Layers className="w-4 h-4" /> Retrieved & Enriched Candidates
                   </h3>
                   <div className="grid sm:grid-cols-2 gap-4">
-                    {report.candidates.map((c, i) => <CandidateCard key={i} c={c} />)}
+                    {report.candidates.retrieved_and_enriched.map((c, i) => <CandidateCard key={i} c={c} />)}
                   </div>
                 </div>
               )}
@@ -556,12 +611,12 @@ const App = () => {
               )}
 
               {/* Reasoning */}
-              {report.reasoning && (
+              {report.brief?.reasoning && (
                 <Card className="p-6 border-l-4 border-scout-gold">
                   <h3 className="text-sm font-bold text-scout-gold uppercase mb-3 flex items-center gap-2">
                     <Brain className="w-4 h-4" /> Chain-of-Thought Reasoning
                   </h3>
-                  <BulletText text={report.reasoning} italic />
+                  <BulletText text={report.brief.reasoning} italic />
                 </Card>
               )}
 
@@ -571,7 +626,7 @@ const App = () => {
                   <h3 className="text-lg font-semibold flex items-center gap-2">
                     <Shield className="w-5 h-5 text-scout-gold" /> Final Scouting Brief
                   </h3>
-                  {report.candidates?.length > 0 && (
+                  {report.candidates?.retrieved_and_enriched?.length > 0 && (
                     <button onClick={() => handleEvaluate()} disabled={evalState.loading}
                       className="text-xs border border-scout-gold/50 text-scout-gold rounded px-3 py-1.5 hover:bg-scout-gold/10 disabled:opacity-50 flex items-center gap-1.5">
                       <CheckCircle2 className="w-3.5 h-3.5" />
@@ -579,7 +634,7 @@ const App = () => {
                     </button>
                   )}
                 </div>
-                <BulletText text={report.scouting_brief} />
+                <BulletText text={report.brief?.narrative} />
 
                 {/* DeepEval correctness scorecard (auto-runs after each query) */}
                 {evalState.loading && !evalState.data && (

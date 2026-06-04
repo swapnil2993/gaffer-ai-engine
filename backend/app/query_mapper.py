@@ -22,8 +22,8 @@ TACTICAL_FILTERS = {
         {"PrgC": 0.60, "PrgP": 0.60},
     ),
     "creativity": (
-        ["creative", "assist", "chance creation", "key pass", "key passes", "through ball", "through balls", "unlock", "unlock defense"],
-        {"Ast": 0.50, "KP": 0.70},
+        ["creative", "assist", "chance creation", "key pass", "key passes", "through ball", "through balls", "unlock", "unlock defense", "playmaking"],
+        {"Ast": 0.50, "xAG": 0.60, "PrgP": 0.50},  # Use xAG (expected assists) and PrgP (progressive passes) as proxies for key passes/through balls
     ),
     "goal_threat": (
         ["goal scorer", "prolific", "finishing", "shot"],

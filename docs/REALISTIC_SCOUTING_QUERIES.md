@@ -1,301 +1,186 @@
 # Realistic Scouting Queries (15 Examples)
 
-These queries reflect **actual scouting use cases** — recruitment teams looking for specific player types to fill roles in their squads.
+These 15 queries represent **actual scouting use cases** that blend all 3 system capabilities:
+1. **Current form** (season-specific performance)
+2. **Career trajectory** (multi-year trends & consistency)
+3. **Tactical fit** (role requirements & system integration)
 
 ---
 
-## Group 1: Tactical Role Requirements (Season-Specific)
+## Query 1: High-Press Midfielder
+```
+Ball-winning midfielder for our high press. Need someone with high tackle success 
+this season AND showing improvement over 3 years. Must be consistent — not a 
+one-season wonder. Recovery runs in the final third are critical.
+```
 
-### Query 1: Pressing Midfielder
-```
-Ball-winning midfielder for our high press system in 2024/25. Need someone with 
-high tackle success rate and recovery runs in the final third. What we're running now.
-```
-**Scouting context:** Need immediate replacement for injured midfielder  
-**Expected:** Routes to `STATS_COLLECTION`, filters for 2024/25 stats  
-**DeepEval:** Should cite tackles, interceptions, recoveries with thresholds
+**Capabilities**: Current tackles + Season-specific + Career momentum + Consistency + Tactical role
 
 ---
 
-### Query 2: Creative Playmaker
+## Query 2: Creative 10 with Trajectory
 ```
 Looking for a 10 or inside forward who can unlock defenses with key passes and 
-through balls. For Liverpool's current system. 2024/25 form only.
+through balls. Current form matters (2024/25), but we want someone who's improving 
+over time — shows they're getting better at their craft. Not regressing.
 ```
-**Scouting context:** Upgrade to attacking midfield depth  
-**Expected:** Routes to `STATS_COLLECTION`, season filter applied  
-**DeepEval:** Only mentions assists, key passes, not defensive stats
+
+**Capabilities**: Current assists + Form + Career improvement + Growth trajectory
 
 ---
 
-### Query 3: Defensive Full-Back
+## Query 3: RB for Defending & Attack Support
 ```
-Right-back for Chelsea's back four. Need someone good at 1v1 defending with 
-high tackle success. Current season performance — must be sharp right now.
+Right-back for Chelsea's back four who's sharp right now but also shows promise 
+over time. Good at 1v1 defending (current season) AND consistent with progressive 
+carries (ability to start attacks). What does his 3-year trend show?
 ```
-**Scouting context:** Squad rotation/competition for RB position  
-**Expected:** Routes to `STATS_COLLECTION`, position filter: RB  
-**DeepEval:** Cites tackles, tackle success rate specific to current form
+
+**Capabilities**: Current form + 1v1 defending + Attack support + Career consistency
 
 ---
 
-### Query 4: Ball Progression Center-Back
+## Query 4: CB for Build-Up Play with Long-Term Fit
 ```
-We're rebuilding our defense to play out from the back. Center-back for Man City's 
-system who can pass progressively and carry the ball forward. This season form.
+Center-back for Man City's system who can pass progressively and carry the ball 
+forward. This season form matters, but we need someone who's been consistent at 
+this for 3+ years AND improving in distribution. Long-term investment.
 ```
-**Scouting context:** System-specific recruitment (build-up play)  
-**Expected:** Routes to `STATS_COLLECTION`, filters for progressive passes  
-**DeepEval:** Only cites passing metrics, not defensive metrics
+
+**Capabilities**: Current distribution + Progressive plays + Career consistency + Improvement trend
 
 ---
 
-### Query 5: False 9 Striker
+## Query 5: False 9 with Improving Link Play
 ```
-Wanted: Forward who drops deep to receive in the 9 space, can link play, not 
-necessarily the highest goal scorer. For our 2024/25 squad planning.
+Forward who drops deep to receive in the 9 space and links play well. This season 
+goals (5+) show current output, but more important: is he improving at chance 
+creation over time? We want a false 9 who's getting better at playmaking.
 ```
-**Scouting context:** Specific tactical role rather than pure number 9  
-**Expected:** Routes to `STATS_COLLECTION`, creative metrics > goal metrics  
-**DeepEval:** Cites assists, chances created, not just goals
+
+**Capabilities**: Current goals + Link play + Career trajectory in assists + Improvement metric
 
 ---
 
-## Group 2: Youth/Emerging Talent Assessment (Career-Focused)
+## Query 6: Emerging Young Midfielder — Form + Trajectory
+```
+Which young midfielders have shown consistent improvement over 2-3 seasons AND 
+are in good current form? We want emerging talent with upward trajectory AND 
+proving it now. Show me players getting better AND performing.
+```
 
-### Query 6: Breakout Young Midfielder
-```
-Which young midfielders have shown consistent improvement over the last 2-3 seasons? 
-We want emerging talent with genuine upward trajectory, not one-season wonders.
-```
-**Scouting context:** Youth development/academy graduation tracking  
-**Expected:** Routes to `CAREER_COLLECTION`, shows momentum + consistency  
-**DeepEval:** Cites momentum percentage and trend, not single-season peaks
+**Capabilities**: Career improvement + Current performance + Consistency + Momentum
 
 ---
 
-### Query 7: Improving Defender
+## Query 7: Improving CB — Defensive + Career Context
 ```
-Center-backs who are improving year-on-year. We need defenders getting better, 
-not in decline. 3-year progression matters — shows they're learning.
+Center-backs who are improving year-on-year in defensive intensity. We need 
+defenders getting better over time (not declining), AND currently performing at 
+high level. Show momentum + current form in tackles/interceptions.
 ```
-**Scouting context:** Long-term defensive recruitment strategy  
-**Expected:** Routes to `CAREER_COLLECTION`, momentum filter  
-**Impact:** HIGH confidence for improving players, LOW for declining
+
+**Capabilities**: Career momentum + Current defensive metrics + Improvement trend
 
 ---
 
-### Query 8: Consistent Performer
+## Query 8: Consistent Performer — Stable But Still Active
 ```
-Midfielder we can rely on. Need someone very stable across multiple seasons — 
-not hot/cold. Consistency over volatility.
+Midfielder we can rely on. Need someone very stable across 3+ seasons AND still 
+in good current form. Consistency over volatility, but must be performing now, 
+not just have been good historically.
 ```
-**Scouting context:** Reduce risk — avoid flaky players  
-**Expected:** Routes to `CAREER_COLLECTION`, filters by consistency metric  
-**DeepEval:** Only mentions consistency, variance, not individual season peaks
+
+**Capabilities**: Career consistency + Current form + Stability metric
 
 ---
 
-## Group 3: Market Opportunity / Transfer Window (Mixed Signals)
+## Query 9: Rising Star — Form + Growth Potential
+```
+Young attacker in good current form (5+ goals this season) who's also improving 
+over time. Growing player with current output. Show both this season performance 
+AND 3-year trajectory for resale value planning.
+```
 
-### Query 9: Rising Star for Resale
-```
-Young attacker improving over time with 5+ goals this season. Good investment — 
-growing player with current output. Resale value in 2-3 years.
-```
-**Scouting context:** Financial planning / academy profit  
-**Expected:** Hybrid — checks both career momentum AND current season goals  
-**Impact:** Shows both "+15% improvement" AND "8 goals this season"
+**Capabilities**: Current goals + Current form + Career improvement trajectory
 
 ---
 
-### Query 10: Bargain Buy
+## Query 10: Bounce-Back Candidate — Form Dip + Career Baseline
 ```
-Defender who was solid in 2023/24 but seems to have dipped recently. If he's 
-been consistent overall, could be undervalued in 2024/25. Bounce-back candidate.
+Defender who was solid in 2023/24 but dipped recently. Check: Is he been 
+consistent historically? What's his 3-year baseline? Could this be undervaluation 
+in 2024/25 or genuine decline? Show both current form AND career context.
 ```
-**Scouting context:** Post-injury recovery / form dip opportunity  
-**Expected:** Compares career average to current season (below average = opportunity)  
-**DeepEval:** Shows season-vs-career comparison explicitly
+
+**Capabilities**: Current form vs career baseline + Historical consistency + Trend analysis
 
 ---
 
-### Query 11: Veteran Leader for Depth
+## Query 11: Veteran Leader — Proven Consistency + Current Reliability
 ```
 Midfielder over 30 with very stable, consistent performance over 3+ years. 
-Not exciting but reliable. Squad depth, changing room presence.
+Must still be reliable right now (2024/25 form matters). Squad depth and 
+changing room presence, but only if currently performing.
 ```
-**Scouting context:** Experience signing for squad balance  
-**Expected:** Routes to `CAREER_COLLECTION`, shows "very consistent" badge  
-**Impact:** Stability valued over growth/momentum
+
+**Capabilities**: Career consistency + Current performance + Age/experience + Reliability
 
 ---
 
-## Group 4: Position-Specific Replacement (Tactical Needs)
+## Query 12: Defensive Midfielder — Tactical + Form + Consistency
+```
+Our new 4-2-3-1 formation needs a defensive-minded midfielder strong in recovery 
+and tackle. Give me options for 2024/25, but prioritize players who've been 
+consistently good at this role (3-year view) AND currently sharp.
+```
 
-### Query 12: Defensive Transition Partner
-```
-Our new 4-2-3-1 formation needs a defensive-minded midfielder who's strong in 
-recovery and tackle. Partner for the press. Give me options for 2024/25.
-```
-**Scouting context:** Formation change requires specific type  
-**Expected:** Routes to `STATS_COLLECTION`, filters for tackles/interceptions  
-**DeepEval:** Only mentions defensive stats, not creativity
+**Capabilities**: Tactical role (4-2-3-1 system) + Current form + Career consistency
 
 ---
 
-### Query 13: Left-Back for Overlap Attacks
+## Query 13: Attacking Full-Back — Progressive Play + Current Output
 ```
-Left-back who gets forward well — need high assists/key passes and progressive 
-carries to support our wide attacking system. This season form.
+Left-back who gets forward well with high assists/key passes AND progressive 
+carries. Current season form (2024/25) shows he's doing it now, but is this 
+sustainable? Check 3-year trend in attacking contributions.
 ```
-**Scouting context:** Attacking full-back in transition-heavy team  
-**Expected:** Routes to `STATS_COLLECTION`, filters for attacking metrics on fullback  
-**DeepEval:** Cites assists and progressive carries, not just defensive work
+
+**Capabilities**: Tactical (attacking fullback role) + Current assists/carries + Career trend
 
 ---
 
-### Query 14: Pressing Forward Upgrade
+## Query 14: Pressing Forward — Work Rate + Form + Consistency
 ```
-Striker for our high press. Need someone who works hard off the ball — tackles, 
-pressing success in the final third. Not just about goals. Current season.
+Striker for our high press. Need someone who works hard off the ball (tackles, 
+pressing success) in current season, but also does this consistently over time — 
+not just this season's tactical experiment. Show sustainability.
 ```
-**Scouting context:** Modern pressing system demands (not traditional 9)  
-**Expected:** Routes to `STATS_COLLECTION`, filters for defensive activity  
-**Impact:** Shows tackles/pressing before goals in importance
+
+**Capabilities**: Tactical (high press role) + Current defensive work + Career consistency
 
 ---
 
-### Query 15: Rebuild Center-Back Pairing
+## Query 15: Defensive Rebuild — Contrasting Profiles with Trends
 ```
-Two center-backs to rebuild the defense. Both must be very consistent over time — 
-one experienced (stable career), one improving (upward trajectory). 3-year view.
+Two center-backs to rebuild defense. One experienced (very stable over 3+ years, 
+currently performing). One improving (upward trajectory, currently showing promise). 
+Show both career context AND this season form for each profile type.
 ```
-**Scouting context:** Major defensive overhaul  
-**Expected:** Routes to `CAREER_COLLECTION`, shows two different types  
-**Impact:** Shows contrasting profiles (stable vs. improving)
+
+**Capabilities**: Career stability (one player) + Career improvement (other player) + Current form (both) + Tactical rebuild
 
 ---
 
-## Testing Script for Realistic Scenarios
+## System Capabilities Used Across All Queries
 
-Save as `scout_test.sh`:
+✅ **All 15 queries blend**:
+- **Current Form**: Season-specific search (2024/25 performance)
+- **Career Trajectory**: Multi-year trends, momentum, consistency
+- **Tactical Fit**: Role requirements, system integration, specific metrics
 
-```bash
-#!/bin/bash
-
-echo "Starting scouting query tests..."
-./start.sh &
-sleep 5
-
-declare -a queries=(
-  "Ball-winning midfielder for our high press system in 2024/25. Need someone with high tackle success rate and recovery runs in the final third. What we're running now."
-  "Looking for a 10 or inside forward who can unlock defenses with key passes and through balls. For Liverpool's current system. 2024/25 form only."
-  "Right-back for Chelsea's back four. Need someone good at 1v1 defending with high tackle success. Current season performance — must be sharp right now."
-  "We're rebuilding our defense to play out from the back. Center-back for Man City's system who can pass progressively and carry the ball forward. This season form."
-  "Wanted: Forward who drops deep to receive in the 9 space, can link play, not necessarily the highest goal scorer. For our 2024/25 squad planning."
-  "Which young midfielders have shown consistent improvement over the last 2-3 seasons? We want emerging talent with genuine upward trajectory, not one-season wonders."
-  "Center-backs who are improving year-on-year. We need defenders getting better, not in decline. 3-year progression matters — shows they're learning."
-  "Midfielder we can rely on. Need someone very stable across multiple seasons — not hot/cold. Consistency over volatility."
-  "Young attacker improving over time with 5+ goals this season. Good investment — growing player with current output. Resale value in 2-3 years."
-  "Defender who was solid in 2023/24 but seems to have dipped recently. If he's been consistent overall, could be undervalued in 2024/25. Bounce-back candidate."
-  "Midfielder over 30 with very stable, consistent performance over 3+ years. Not exciting but reliable. Squad depth, changing room presence."
-  "Our new 4-2-3-1 formation needs a defensive-minded midfielder who's strong in recovery and tackle. Partner for the press. Give me options for 2024/25."
-  "Left-back who gets forward well — need high assists/key passes and progressive carries to support our wide attacking system. This season form."
-  "Striker for our high press. Need someone who works hard off the ball — tackles, pressing success in the final third. Not just about goals. Current season."
-  "Two center-backs to rebuild the defense. Both must be very consistent over time — one experienced (stable career), one improving (upward trajectory). 3-year view."
-)
-
-echo "Running 15 realistic scouting queries..."
-echo ""
-
-for i in "${!queries[@]}"; do
-  query_num=$((i+1))
-  echo "=========================================="
-  echo "Query $query_num of ${#queries[@]}"
-  echo "=========================================="
-  echo "Prompt: ${queries[$i]}"
-  echo ""
-  
-  response=$(curl -s -X POST http://localhost:8000/query \
-    -H "Content-Type: application/json" \
-    -d "{\"query\": \"${queries[$i]}\"}")
-  
-  # Extract key fields
-  collection=$(echo $response | jq -r '.phases[3].collection // "unknown"' 2>/dev/null)
-  query_type=$(echo $response | jq -r '.impact_analysis.query_type // "unknown"' 2>/dev/null)
-  confidence=$(echo $response | jq -r '.impact_analysis.primary_driver.confidence_level // "unknown"' 2>/dev/null)
-  player=$(echo $response | jq -r '.candidates[0].player_name // "unknown"' 2>/dev/null)
-  
-  echo "Results:"
-  echo "  Collection: $collection"
-  echo "  Query Type: $query_type"
-  echo "  Top Pick: $player"
-  echo "  Confidence: $confidence"
-  echo ""
-  
-  # Full response (uncomment for debugging)
-  # echo "Full response:"
-  # echo $response | jq '.' 
-  
-  sleep 1
-done
-
-echo "=========================================="
-echo "Testing complete!"
-echo "=========================================="
-```
-
-Run with:
-```bash
-chmod +x scout_test.sh
-./scout_test.sh 2>&1 | tee scout_results.log
-```
-
----
-
-## What to Verify for Each Query
-
-### Query 1: High Press Midfielder
-- ✅ Routes to: `STATS_COLLECTION` (2024/25 specific)
-- ✅ Mentions: tackles, tackle success, recoveries
-- ✅ Does NOT mention: assists, creativity
-- ✅ Confidence: Based on defensive metrics quality
-
-### Query 6: Emerging Talent
-- ✅ Routes to: `CAREER_COLLECTION` (3-year improvement)
-- ✅ Shows: Momentum %, upward trend
-- ✅ Mentions: "Consistent improvement" or "improving YoY"
-- ✅ Confidence: HIGH if momentum > +5%
-
-### Query 9: Rising Star
-- ✅ Routes to: Either (mixed signals)
-- ✅ Shows: Both momentum + this-season goals
-- ✅ Example brief: "8 goals this season (good form), +12% YoY (improving trajectory)"
-- ✅ Impact: Highlights both current output AND growth rate
-
-### Query 15: Rebuild Pairing
-- ✅ Routes to: `CAREER_COLLECTION` (3-year context)
-- ✅ Primary: Improving defender (momentum positive)
-- ✅ Runner-up: Stable defender (consistency high, low variance)
-- ✅ Shows: Contrasting profiles for different roles
-
----
-
-## Expected DeepEval Performance
-
-After improvements, these queries should show:
-
-| Query Type | Faithfulness | Answer Relevancy |
-|-----------|--------------|------------------|
-| Season-specific (1-5, 12-14) | 92-95% | 88-92% |
-| Career-focused (6-8, 11, 15) | 90-94% | 86-90% |
-| Mixed/Complex (9-10) | 88-92% | 84-88% |
-
-**Overall average target: 90-93%** (up from baseline 84%)
-
----
-
-
-
-
+✅ **All 15 will trigger**:
+- Full 8-phase pipeline with query routing
+- 15 explainability improvements (confidence scoring, risk flags, similar players, etc.)
+- Both STATS_COLLECTION and CAREER_COLLECTION usage
+- Hybrid ranking with form + trajectory context

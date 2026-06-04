@@ -176,6 +176,40 @@ def index_tactical_reference():
 
     print(f"Indexed {len(systems)} tactical systems from comprehensive reference guide.")
 
+    # Index Football Hackers context pack as addon to tactical reference
+    context_pack_path = "data/historical/Football_Hackers.md"
+    if os.path.exists(context_pack_path):
+        print(f"Indexing {context_pack_path} as tactical reference addon...")
+        with open(context_pack_path, "r", encoding="utf-8") as f:
+            content = f.read()
+
+        # Split into sections for better chunking
+        sections = content.split("\n## ")
+        for section_text in sections:
+            if not section_text.strip():
+                continue
+
+            section_title = section_text.split("\n")[0] if "\n" in section_text else "Football Hackers"
+            full_section = f"## {section_text}" if section_text and section_text[0] != "#" else section_text
+
+            payload = TacticalTheoryPayload(
+                title="Football Hackers",
+                chapter=section_title,
+                content=full_section,
+            )
+
+            metadata = {
+                "title": "Football Hackers",
+                "chapter": section_title,
+                "heading": section_title,
+                "concept": section_title,
+                "source": "football-hackers-context",
+            }
+
+            insert_theory_chunk(payload.content, metadata)
+
+        print(f"Indexed Football Hackers context pack into tactical reference collection.")
+
 
 def index_tactical_book(limit: int = None):
     """Indexes tactical books (The Inverted Pyramid + Football Hackers) without LLM enrichment.
@@ -232,7 +266,7 @@ def index_player_stats():
     """Indexes player stats from CSVs."""
     csv_paths = [
         ("data/epl_seasons/fbref_PL_2024-25.csv", "2024/2025"),
-        ("data/epl_seasons/player_stats_25-26.csv", "2025/2026"),
+        ("data/epl_seasons/raw/merged_25_26.csv", "2025/2026"),  # Use raw merged file to avoid file corruption
     ]
 
     for path, season in csv_paths:
@@ -419,9 +453,14 @@ def index_player_career_aggregates():
             "avg_assists": agg["aggregates"].get("assists", {}).get("avg", 0.0),
             "avg_prgp": agg["aggregates"].get("prgp", {}).get("avg", 0.0),
             "avg_tackles": agg["aggregates"].get("tackles", {}).get("avg", 0.0),
+            "avg_tackles_won": agg["aggregates"].get("tackles_won", {}).get("avg", 0.0),
+            "avg_interceptions": agg["aggregates"].get("interceptions", {}).get("avg", 0.0),
             "best_season": agg["best_season"],
             "trend": agg["trend"],
             "momentum": agg["momentum"],
+            "improvement_score": agg.get("improvement_score", 0.0),
+            "stability_score": agg.get("stability_score", 0.0),
+            "consistency_pct": agg.get("consistency_pct", 0.0),
             "type": "career",
         }
 
@@ -450,9 +489,9 @@ if __name__ == "__main__":
     index_tactical_reference()
     print()
 
-    print("Step 4: Indexing tactical books...")
-    index_tactical_book()
-    print()
+    # print("Step 4: Indexing tactical books...")
+    # index_tactical_book()
+    # print()
 
     print("Step 5: Indexing player stats...")
     index_player_stats()
