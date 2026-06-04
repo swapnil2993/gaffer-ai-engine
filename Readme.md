@@ -1,17 +1,24 @@
 # Gaffer AI Engine - Scouting Intelligence Platform
 
-**Explainable RAG-based scouting system for football recruitment with hybrid indexing and real-time impact analysis.**
+**Explainable RAG-based scouting system for football recruitment with unified blended indexing, grounded LLM generation, and quality-assured outputs.**
 
 ---
 
-## 📚 Documentation
+## 📚 Documentation (Quick Links)
 
-All documentation is organized in the `/docs` directory:
+### 🎯 **Start Here**
+- **[COMPLETE_GUIDE_FOR_BEGINNERS.md](COMPLETE_GUIDE_FOR_BEGINNERS.md)** — Everything explained for beginners
+  - What is RAG? (Retrieval-Augmented Generation)
+  - Complete 8-phase query walkthrough
+  - All AI terminology explained simply
+  - Integration of Docling (book parsing), DSPy (brief generation), DeepEval (quality validation)
+  - Blended collection architecture
 
-- **[docs/INDEX.md](docs/INDEX.md)** — Documentation navigation guide
-- **[docs/ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md)** — **⭐ START HERE** — Comprehensive 10+ technology stack overview (DSPy, Milvus, Pydantic, Docling, Presidio, DeepEval, sentence-transformers, FastAPI, React). Covers 8-phase query pipeline, modular data cleaning, quality metrics, and hard-won engineering lessons.
-- **[docs/DATA_CLEANING_PIPELINE.md](docs/DATA_CLEANING_PIPELINE.md)** — Modular data cleaning & enhancement architecture with 9 independent, testable modules and shared utilities
-- **[docs/REALISTIC_SCOUTING_QUERIES.md](docs/REALISTIC_SCOUTING_QUERIES.md)** — 15 example scouting queries you can test immediately
+- **[complete-flow-client-server.excalidraw](complete-flow-client-server.excalidraw)** — Visual architecture diagram
+  - Client-server flow with arrows
+  - All 8 phases of query processing
+  - Tool integration points
+  - Database layer (Milvus + CSVs)
 
 ---
 
@@ -38,93 +45,101 @@ Run the complete indexing pipeline:
 uv run python -m backend.scripts.index_data
 ```
 
-This executes:
+This executes **6 steps** in order:
 
-**Data Cleaning Pipeline** (modular, in `backend/scripts/data_cleaning/`):
-1. **CSV Repair** — Fix unquoted commas in position/wage fields
-2. **Defensive Stats** — Add estimated tackles/interceptions to recent seasons
-3. **Wage Assignment** — Infer realistic wages for 270 missing players
+**Step 1: Data Cleaning** (modular, in `backend/scripts/data_cleaning/`)
+- CSV repair: Fix unquoted commas in position/wage fields
+- Defensive stats: Fill estimated tackles/interceptions
+- Wage assignment: Infer wages for 270 missing players
+- Data transformation: Convert stats to prose descriptions
+- Career aggregation: Create 3-year player profiles
 
-**Indexing** (from `backend/scripts/index_data.py`):
-4. **Tactical Reference** — Index theory books and tactical concepts
-5. **Player Stats** — Build embeddings for season-specific stats (3 seasons)
-6. **Career Aggregates** — Build embeddings for 3-year player profiles
+**Step 2-6: Indexing & Milvus Setup** (from `backend/scripts/index_data.py`)
+- Initialize Milvus collections (Blended Index A + B)
+- Index tactical reference from books (theory chunks)
+- Index player stats for 2024/25 season
+- Index player stats for 2023/24 season
+- Generate and index career aggregate profiles
+
+**Result:** 2,391 indexed documents (797 players × 3 seasons) + ~100 theory chunks
 
 ### After Data Updates
 
-If you update CSV files in `data/epl_seasons/`, rerun indexing:
+If you update CSV files in `data/epl_seasons/`, rerun the full pipeline:
 
 ```bash
 uv run python -m backend.scripts.index_data
 ```
 
-### Individual Steps
+This re-cleans and re-indexes all data from scratch.
 
-Run specific stages if needed:
+### Environment Variables
 
-```python
-# Python API: Run full cleaning pipeline
-from backend.scripts.data_cleaning import run_cleaning_pipeline
-run_cleaning_pipeline(verbose=True)
+Control indexing behavior with:
 
-# Or run individual modules
-from backend.scripts.data_cleaning import csv_repair, defensive_stats, wage_assignment
-csv_repair.run()
-defensive_stats.run()
-wage_assignment.run()
+```bash
+# Limit indexing to first N players per season (0 = no limit)
+MAX_PLAYERS_PER_SEASON=50 uv run python -m backend.scripts.index_data
 ```
 
-See [docs/DATA_CLEANING_PIPELINE.md](docs/DATA_CLEANING_PIPELINE.md) for detailed module reference and troubleshooting.
+Useful for testing/debugging.
 
 ---
 
 ## ✨ Key Features
 
-✅ **Hybrid Indexing** — Season-specific + 3-year career profiles  
-✅ **Smart Routing** — Auto-detects career vs. form queries  
-✅ **Impact Analysis** — Shows why each player was recommended  
-✅ **Quality Scoring** — 90-95% faithfulness & relevancy  
-✅ **Complete Data** — 797 players with realistic wages  
-✅ **Modular Pipeline** — Clean, testable data cleaning architecture  
+✅ **Blended Collection** — Unified season + career data in single Milvus index  
+✅ **8-Phase Pipeline** — Embed → Parse → Theory → Route → Retrieve → Blend → Enrich → Generate  
+✅ **Three Tools** — Docling (parsing) + DSPy (grounded generation) + DeepEval (quality validation)  
+✅ **Hybrid Search** — Combines semantic vectors (50%) with statistical ranking (50%)  
+✅ **Grounded Briefs** — No hallucinations, every fact is sourced and traceable  
+✅ **Complete Data** — 2,391 player records (797 players × 3 seasons) + tactical theory  
 
 ---
 
 ## 🏗️ Architecture Highlights
 
-**Modular Data Cleaning & Enhancements**
-- 9 independent modules in `backend/scripts/data_cleaning/`
-- **Cleaning**: Fix CSV structure, fill missing stats, assign wages
-- **Enhancements**: Convert stats to prose, generate 3-year career profiles
-- Each step is testable and reusable
-- Single orchestrator (`pipeline.py`) controls execution
-- Shared utilities (`common.py`) eliminate code duplication
+**Blended Vector Indexing** ⭐ *Unified approach*
+- Single Milvus collection stores BOTH season stats AND career metrics per player
+- Season-specific: goals, tackles, press success, progressive passes, etc.
+- Career metrics: momentum (+8%), consistency (0.85), trend (improving), best season
+- Simplifies queries: no routing needed, one collection handles both form and career queries
+- 2,391 documents (797 players × 3 seasons)
 
-**Smart RAG System**
-- Dual-index design: season-specific + career aggregates
-- Query routing: auto-detects "improving" vs "form" queries
-- Impact analysis: explains each recommendation decision
-- Career tracking: momentum, consistency, trend metrics
+**8-Phase RAG Pipeline**
+1. **Embed** — Convert query to 384-d vector (sentence-transformers)
+2. **Parse** — Extract intent using regex + concept mapping
+3. **Retrieve Theory** — Get tactical knowledge (Docling-parsed books)
+4. **Route** — Detect career vs form queries
+5. **Retrieve Candidates** — Hybrid search (filters + cosine similarity)
+6. **Blend Scores** — 50% vector similarity + 50% statistical ranking
+7. **Enrich** — Join manager, wages, club data
+8. **Generate Brief** — DSPy structured generation with grounding constraints
 
-**Quality-First**
-- DeepEval metrics: 90-95% faithfulness & relevancy
-- Filtered metrics checklist: only shows query-relevant stats
-- Privacy-aware: scrubs PII from book excerpts
+**Quality-First with Tools**
+- 🔴 **Docling**: Parse books into semantic chunks
+- 🟢 **DSPy**: Structured brief generation (no hallucinations)
+- 🔵 **DeepEval**: Validate with 3 metrics (Faithfulness, Relevancy, Contextual)
+- Result: 90-95% quality outputs, fully auditable
 
 ---
 
-## 🎯 For Your Role
+## 🎯 Getting Started (By Role)
 
-**Scouts & Recruiters:**
-- Start with [docs/REALISTIC_SCOUTING_QUERIES.md](docs/REALISTIC_SCOUTING_QUERIES.md) to see 15 example queries
-- Then read [docs/ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md) section 1-2 for system overview
+**Product Managers & Scouts:**
+- Read [COMPLETE_GUIDE_FOR_BEGINNERS.md](COMPLETE_GUIDE_FOR_BEGINNERS.md) Part 1 (What is RAG?)
+- Open [complete-flow-client-server.excalidraw](complete-flow-client-server.excalidraw) for visual overview
+- Understand: RAG retrieves real data, AI writes grounded briefs, DeepEval validates quality
 
-**Engineers & Developers:**
-- Read [docs/ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md) for the complete technical stack (all 10+ technologies, module organization, hard-won fixes)
-- Review [docs/DATA_CLEANING_PIPELINE.md](docs/DATA_CLEANING_PIPELINE.md) for modular data architecture and pipeline details
+**Backend & Full-Stack Engineers:**
+- Read [COMPLETE_GUIDE_FOR_BEGINNERS.md](COMPLETE_GUIDE_FOR_BEGINNERS.md) Parts 4-6 (8 phases, blended collection)
+- Check `backend/app/engine.py` for phase orchestration
+- Review `backend/app/database.py` for Milvus operations
 
-**AI/LLM Engineers:**
-- See [docs/ARCHITECTURE_COMPLETE.md](docs/ARCHITECTURE_COMPLETE.md) section 8 (Quality & Evaluation) for DeepEval metrics, grounding strategies, and DSPy signatures
-- Review section 10 (Hard-Won Lessons) for production insights
+**AI/ML & LLM Engineers:**
+- Study [COMPLETE_GUIDE_FOR_BEGINNERS.md](COMPLETE_GUIDE_FOR_BEGINNERS.md) Part 5 (Blended scoring, 50/50 weighting)
+- Check `backend/generation/dspy_framework.py` for DSPy signature + constraints
+- Review `backend/evaluation/deepeval_metrics.py` for quality metrics (Faithfulness, Relevancy, Contextual)
 
 ---
 
@@ -161,10 +176,11 @@ gaffer-ai-engine/
 
 ---
 
-### Diagram
+## 📊 System Diagram
 
-![Flow diagram](image.png)
-
-## 📖 Full Documentation
-
-See the [docs/](docs/) directory for complete documentation.
+See [complete-flow-client-server.excalidraw](complete-flow-client-server.excalidraw) for the complete visual architecture showing:
+- Client-server communication
+- All 8 phases of query processing
+- Tool integration (Docling, DSPy, DeepEval)
+- Milvus blended collection
+- Reference data (CSVs)
