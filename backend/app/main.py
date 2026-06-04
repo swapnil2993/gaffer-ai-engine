@@ -64,12 +64,20 @@ async def system_status():
         "seasons": ["2023/2024", "2024/2025", "2025/2026"],
         "llm": {"ready": is_dspy_ready(), "model": _lm_name()},
         "pipeline": [
-            "Embed query",
-            "Retrieve theory (Index A)",
-            "Retrieve players (Index B)",
-            "Enrich (manager + cost)",
-            "Project similarity (PCA)",
-            "DSPy ChainOfThought brief",
+            "1. Embed query (384-d vector space)",
+            "2. Understand query (infer position, player, club, stats)",
+            "3. Retrieve tactical theory (Index A, semantic + concepts)",
+            "4. Retrieve candidates (Index B, hybrid scalar+vector)",
+            "5. Rank by stats (blend 50/50 cosine + per-90 metrics)",
+            "6. Enrich with reference data (manager, wages, career)",
+            "7. Project to 2D (PCA similarity visualization)",
+            "8. Generate brief (DSPy ChainOfThought)",
+        ],
+        "optional_enhancements": [
+            "Calculate career progression (momentum, consistency, trend)",
+            "Compute impact analysis (why each player ranked here)",
+            "Score with DeepEval (faithfulness, relevancy)",
+            "Show filter relaxation ladder (when initial filters return 0)",
         ],
     }
 
@@ -84,16 +92,18 @@ async def theory_document():
 async def search_scouting_reports(
     query_str: str,
     season: str = None,
-    position: str = None,
-    player_name: str = None,
-    scouting_for: str = None,
 ):
     """
     Endpoint for semantic football queries.
 
-    All filters are optional. Provide `player_name` to evaluate a specific player;
-    `season`/`position` narrow the candidate pool. Filters are relaxed
-    automatically if they match nothing (see `retrieval.filter_used`).
+    Position, player name, and club (scouting_for) are inferred from the query text
+    automatically via Phase 2 (Query Understanding). No explicit parameters needed.
+
+    Optional:
+    - `season`: Override the detected season (default: latest available).
+      Format: "2024/2025", "2025/2026", etc.
+
+    All filters are relaxed automatically if they match nothing (see retrieval.filter_used).
     """
     if not is_dspy_ready():
         raise HTTPException(
@@ -101,14 +111,12 @@ async def search_scouting_reports(
             detail=("Language model not configured. Set OPENROUTER_API_KEY or OPENAI_API_KEY and restart."),
         )
     try:
-        result = scout_engine(query_str, season, position, player_name, scouting_for=scouting_for)
+        result = scout_engine(query_str, season)
         return {
             "tactical_query": query_str,
-            "filters": {
-                "season": season,
-                "position": position,
-                "player_name": player_name,
-                "scouting_for": scouting_for,
+            "season_override": season,
+            "inferred_from_query": {
+                "note": "Position, player name, and club are extracted from query text in Phase 2"
             },
             "retrieval": result["retrieval"],
             "phases": result["phases"],

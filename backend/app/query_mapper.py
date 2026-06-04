@@ -22,7 +22,7 @@ TACTICAL_FILTERS = {
         {"PrgC": 0.60, "PrgP": 0.60},
     ),
     "creativity": (
-        ["creative", "assist", "chance creation", "key pass"],
+        ["creative", "assist", "chance creation", "key pass", "key passes", "through ball", "through balls", "unlock", "unlock defense"],
         {"Ast": 0.50, "KP": 0.70},
     ),
     "goal_threat": (

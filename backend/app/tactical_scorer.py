@@ -23,6 +23,16 @@ TACTICAL_REQUIREMENTS = {
         "assists": 0.50,
         "xag": 0.65,
     },
+    "creativity": {
+        "key_passes": 0.70,
+        "assists": 0.50,
+        "xag": 0.60,
+    },
+    "chance_creation": {
+        "key_passes": 0.75,
+        "assists": 0.60,
+        "xag": 0.70,
+    },
     "goal_threat": {
         "goals": 0.60,
         "xg": 0.65,
@@ -40,6 +50,7 @@ STAT_KEYS = {
     "prgc": "prgc",
     "assists": "assists",
     "xag": "xag",
+    "key_passes": "key_passes",
     "goals": "goals",
     "xg": "xg",
 }
@@ -60,13 +71,15 @@ def build_metrics_checklist(tactics: List[str], candidate: Dict) -> str:
 
     stats = candidate.get("stats", {})
     lines = []
+    has_matching_metrics = False
 
     for tactic in tactics:
         if tactic not in TACTICAL_REQUIREMENTS:
             continue
 
         tactic_name = tactic.replace("_", " ").title()
-        lines.append(f"\n{tactic_name.upper()}:")
+        tactic_lines = [f"\n{tactic_name.upper()}:"]
+        tactic_has_data = False
 
         requirements = TACTICAL_REQUIREMENTS[tactic]
         for metric, threshold in requirements.items():
@@ -75,18 +88,30 @@ def build_metrics_checklist(tactics: List[str], candidate: Dict) -> str:
             actual_value = stats.get(stat_key)
 
             if actual_value is None:
-                lines.append(f"  - {metric}: [data not available]")
+                # Metric not available in dataset — skip silently rather than showing [data not available]
+                # This lets the LLM reason with available data without highlighting absences
+                continue
             else:
+                tactic_has_data = True
                 status = "✓" if actual_value >= threshold else "✗"
-                pct = f"{actual_value*100:.0f}%" if isinstance(actual_value, float) and actual_value < 2 else f"{actual_value:.2f}"
-                lines.append(
-                    f"  - {metric} > {threshold}: Player {pct} {status}"
+                # Format the value: percentages as %, absolute numbers as is
+                if isinstance(actual_value, float) and actual_value < 2:
+                    pct = f"{actual_value*100:.0f}%"
+                else:
+                    pct = f"{actual_value:.1f}" if isinstance(actual_value, float) else f"{actual_value}"
+                tactic_lines.append(
+                    f"  - {metric.replace('_', ' ')} (target: {threshold}): {pct} {status}"
                 )
+
+        # Only add tactic section if it has matching metrics
+        if tactic_has_data:
+            lines.extend(tactic_lines)
+            has_matching_metrics = True
 
     # Add career context if available
     progression = candidate.get("progression", {})
     if progression and progression.get("trend"):
-        lines.append("\nCARIER TRAJECTORY:")
+        lines.append("\nCAREER TRAJECTORY:")
         trend = progression.get("trend", "unknown")
         momentum = progression.get("momentum", 0)
         momentum_str = f"{momentum*100:+.0f}%" if momentum is not None else "N/A"
@@ -103,5 +128,14 @@ def build_metrics_checklist(tactics: List[str], candidate: Dict) -> str:
             avg_yoy = sum(consistency.values()) / len(consistency) if consistency else 0
             consistency_pct = f"{abs(avg_yoy)*100:.0f}%"
             lines.append(f"  - Consistency: {progression.get('consistency', 'variable')}")
+
+    # If no matching metrics were found, return a helpful message
+    if not has_matching_metrics:
+        return (
+            f"No matching metrics available for {', '.join(tactics)}. "
+            "Recommend based on available stats: "
+            f"{candidate.get('player_name', 'Player')} | "
+            f"{', '.join(f'{k}={v}' for k,v in list(stats.items())[:3])}"
+        )
 
     return "\n".join(lines)

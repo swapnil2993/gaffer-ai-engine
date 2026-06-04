@@ -697,6 +697,7 @@ Milvus Lite allows only 1 process to open `.db` at a time:
 | **Reliability** | Milvus Lite (embedded), no external deps | Zero infrastructure; portable single-file DB |
 | **Cost** | MiniLM (384-d), local parsing, deterministic intent | Cheap embeddings, no LLM latency on intent parsing |
 
+
 ---
 
 ## Next Steps for Implementation
@@ -705,10 +706,5 @@ Milvus Lite allows only 1 process to open `.db` at a time:
 2. **Indexing**: Build the 3 Milvus collections (theory, season-stats, career)
 3. **Query loop**: Test the 8-phase pipeline with realistic scouting queries
 4. **Evaluation**: Run DeepEval regression tests; aim for 90%+ on Faithfulness + Answer Relevancy
-5. **Frontend**: Visualize phases timeline, scatter plot, impact drivers
-6. **Documentation**: Update architecture docs with real-world scaling insights
 
 ---
-
-**Document maintained**: June 2026  
-**Architecture version**: 2.0 (hybrid indexing + career routing + prose embedding + DeepEval improvements)

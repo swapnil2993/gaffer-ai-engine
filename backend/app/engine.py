@@ -45,6 +45,20 @@ from backend.app.reference import (
     get_manager_profile,
     normalize_club,
 )
+from backend.app.explainability import (
+    confidence_score_intent,
+    rank_alternatives,
+    build_filter_relaxation_ladder,
+    scalar_vs_vector_balance,
+    confidence_bands_for_rankings,
+    risk_flags_and_context,
+    comparison_alternatives,
+    similarity_breakdown_by_dimension,
+    explainability_ledger,
+    uncertainty_quantification,
+    player_clustering_similar_players,
+    what_if_alternative_ranking,
+)
 
 
 def _lm_name() -> str:
@@ -114,51 +128,53 @@ class ScoutingReportSignature(dspy.Signature):
     """
     You are an expert Sporting Director producing a recruitment recommendation.
 
-    Your recommendation MUST be grounded exclusively in the metrics_checklist.
-    Every claim is verified against what appears in that checklist.
+    Your recommendation MUST be grounded in available data. When tactical metrics are listed in
+    metrics_checklist, cite ONLY those. When the checklist indicates metrics aren't available,
+    use the player's actual stats (from player_stats) to justify the recommendation.
 
-    RULES (Verification-First):
+    RULES (Grounding-First):
       1. Recommend the single best-fit player (name them) and, briefly, a runner-up.
 
-      2. For EACH tactical concept in the query, cite ONLY metrics from the
-         metrics_checklist. Do NOT infer thresholds or metrics not listed there.
+      2. Prioritize metrics from metrics_checklist (use exact values with ✓/✗).
+         If the checklist lists metrics → cite those with thresholds.
+         If the checklist is empty/missing tactics → fall back to player_stats for justification.
 
-      3. For EACH claim, show explicit verification:
-         CORRECT: "Tackles 160 (target > 150) ✓"
-         WRONG:   "Excellent defensive positioning" (not in checklist)
+      3. For each claim, show explicit verification:
+         CORRECT (with checklist): "Tackles 160 (target > 150) ✓"
+         CORRECT (without checklist): "João has 156 tackles, 45 interceptions → strong ball-winner"
+         WRONG:   "Excellent defensive positioning" (too generic, unverifiable)
 
       4. Build the brief step-by-step:
-         Step 1: Which metrics are in the metrics_checklist? (Note them)
-         Step 2: Which have ✓ (pass)? (These are your evidence)
-         Step 3: How do they address the query? (Make the connection)
-         Step 4: Write brief citing ONLY metrics with ✓
+         Step 1: Check metrics_checklist. Are metrics listed? (Yes/No)
+         Step 2a (Yes): Cite metrics with ✓. Only include passing grades.
+         Step 2b (No): Use player_stats to show why player fits the query.
+         Step 3: Connect to query requirements clearly.
+         Step 4: Write brief grounded in data (either checklist or raw stats).
 
       5. When career data is provided in metrics_checklist:
          - For "improving": cite momentum ✓ and trend
          - For "consistent": cite consistency metric and variance
          - For "declining": cite negative momentum with warning
 
-      6. CRITICAL RULES (Prevents Faithfulness Issues):
-         - DO NOT cite any metric not in the metrics_checklist
-         - DO NOT invent thresholds (e.g., "> 150 tackles" if not stated)
+      6. CRITICAL RULES (Prevent Hallucination):
+         - DO NOT invent metrics or thresholds not in checklist or player stats
          - DO NOT add generic observations like "strong positioning sense"
-         - DO NOT infer unstated requirements
-         - ONLY use exact numbers from the checklist
+         - ALWAYS cite numbers: "156 tackles" not "exceptional defensively"
+         - When using player_stats, reference specific numbers available
+         - Admissible: metrics in checklist OR actual stats in player_stats
 
       7. Discuss wages ONLY if explicitly in player profile.
 
-      8. No generic football platitudes. ONLY cite verifiable metrics.
+      8. No generic football platitudes. Every claim must cite a number.
 
     FORMAT YOUR REASONING as 4-7 bullets showing verification:
-      - Query asks for X. Checklist shows metric Y with threshold Z.
-      - Player achieves value W. ✓ or ✗
-      - Why is this player best fit?
+      - Query asks for X. Available metrics show Y.
+      - Player achieves W. Why is this fit?
 
     FORMAT YOUR BRIEF as:
       [Player Name] is the best fit.
-      - [Query concept]: [Metric] [Value] (target > [Threshold]) ✓
-      - [Query concept]: [Metric] [Value] (target > [Threshold]) ✓
-      - (Repeat for each concept; only include if ✓)
+      - [Query concept]: [Metric/Stat] [Value] [Verification]
+      - (Repeat for each concept)
     """
 
     tactical_context = dspy.InputField(
@@ -167,38 +183,38 @@ class ScoutingReportSignature(dspy.Signature):
     )
 
     player_stats = dspy.InputField(
-        desc="Candidate player profiles with statistics. "
-             "Reference only to verify metrics_checklist values."
+        desc="Candidate player profiles with all available statistics. "
+             "Use these both to verify metrics_checklist claims AND to justify recommendations when "
+             "specific tactical metrics aren't available in the checklist (fallback grounding)."
     )
 
     tactical_query = dspy.InputField(
         desc="Specific tactical question. "
-             "Determines which metrics in the checklist are relevant."
+             "Determines which metrics in the checklist are relevant, or which player_stats to emphasize."
     )
 
     metrics_checklist = dspy.InputField(
-        desc="THE GROUND TRUTH. This is EVERY metric you should cite. "
-             "Format: 'CONCEPT: [name] > [threshold] → Player: [value] ✓/✗'. "
-             "CRITICAL: You may ONLY cite metrics that appear here with exact values. "
-             "If a metric is not in this checklist, do NOT mention it, even if logical. "
-             "Example of CORRECT: 'TACKLES: > 150 → Player: 160 ✓'. "
-             "Example of WRONG: 'Strong defensive reading' (not in checklist, unverifiable)."
+        desc="Available metrics with thresholds (if any). "
+             "If populated: cite ONLY these with exact values and ✓/✗. "
+             "If empty or missing tactics: fall back to player_stats for grounding. "
+             "Format when available: 'CONCEPT: [metric] (target > [threshold]) → [value] ✓/✗'. "
+             "Example filled: 'Tackles 160 (target > 150) ✓'. "
+             "Example empty: '[No matching metrics for this tactic—use player_stats instead]'."
     )
 
     reasoning = dspy.OutputField(
         desc="4-7 bullets showing verification for each claim. "
-             "For each: 'Query concept X requires metric Y. Checklist shows threshold Z. Player has W. ✓/✗'. "
-             "Only mention metrics from the checklist."
+             "For each: cite the metric/stat and its value, then explain fit. "
+             "Source from checklist if available; otherwise from player_stats."
     )
 
     scouting_brief = dspy.OutputField(
-        desc="A tight recommendation citing ONLY checklist metrics with verification. "
-             "Format: '[Player]: [Concept]: [Metric Value] (target > X) ✓'. "
-             "CRITICAL RULES: (1) Do NOT cite any value that doesn't appear in metrics_checklist. "
-             "(2) Do NOT infer or assume thresholds. (3) Every claim must be verifiable. "
-             "(4) No generic observations like 'strong positioning'. (5) Only include metrics with ✓. "
-             "Example CORRECT: 'Tackles 160 (target > 150) ✓ + Interceptions 45 (target > 40) ✓'. "
-             "Example WRONG: 'Exceptional defensive awareness' (not verifiable against checklist)."
+        desc="A recommendation grounded in available data (checklist metrics OR raw player_stats). "
+             "When checklist has metrics with ✓: cite those. "
+             "When checklist is empty: cite actual stats from player_stats. "
+             "Example with checklist: 'Tackles 160 (target > 150) ✓ + Interceptions 45 ✓'. "
+             "Example without checklist: 'João: 156 tackles, 45 interceptions, 12 key passes—strong creator and defender'. "
+             "CRITICAL: Every number must come from checklist or player_stats. No invented claims."
     )
 
 
@@ -438,7 +454,6 @@ class ScoutIntelRAG(dspy.Module):
         self,
         query_vector,
         position,
-        player_name,
         stat_filters,
         limit,
     ):
@@ -446,21 +461,23 @@ class ScoutIntelRAG(dspy.Module):
 
         No season filtering — career aggregates span all years. Simpler relaxation
         ladder since we're dealing with consolidated data.
+
+        Player names are NOT explicitly filtered; semantic search matches naturally
+        if a specific player is named in the query.
         """
         sf = list(stat_filters or [])
         ladder = [
-            (position, player_name, sf, "all constraints (incl. stat thresholds)"),
-            (position, player_name, [], "stat thresholds relaxed"),
-            (position, None, [], "name relaxed"),
-            (None, None, [], "position relaxed"),
+            (position, sf, "all constraints (incl. stat thresholds)"),
+            (position, [], "stat thresholds relaxed"),
+            (None, [], "position relaxed"),
         ]
         seen = set()
-        for p, n, f, note in ladder:
-            key = (p, n, tuple(f))
+        for p, f, note in ladder:
+            key = (p, tuple(f))
             if key in seen:
                 continue
             seen.add(key)
-            hits = query_career(query_vector, position=p, player_name=n, stat_filters=f, limit=limit)
+            hits = query_career(query_vector, position=p, stat_filters=f, limit=limit)
             if hits:
                 return hits, note
         return [], "no career profiles matched"
@@ -470,43 +487,42 @@ class ScoutIntelRAG(dspy.Module):
         query_vector,
         season,
         position,
-        player_name,
         min_minutes,
         stat_filters,
         limit,
     ):
         """Retrieve players, relaxing filters step-by-step until something matches.
 
-        Hybrid: Milvus applies the scalar filters (season / position / name /
+        Hybrid: Milvus applies the scalar filters (season / position /
         min_minutes / stat thresholds) FIRST and ranks only the rows that qualify
         by cosine similarity. We start fully constrained and relax along a ladder —
         dropping the most aggressive constraint first — so the English-derived stat
         requirements are honoured when possible but never cause a silent empty set.
+
+        Player names are NOT explicitly filtered; semantic search matches naturally
+        if a specific player is named in the query.
         """
         sf = list(stat_filters or [])
         ladder = [
             (
                 season,
                 position,
-                player_name,
                 min_minutes,
                 sf,
                 "all constraints (incl. stat thresholds)",
             ),
-            (season, position, player_name, min_minutes, [], "stat thresholds relaxed"),
-            (season, position, player_name, None, [], "min-minutes relaxed"),
-            (season, position, None, None, [], "name relaxed"),
-            (season, None, None, None, [], "position relaxed"),
-            (None, None, player_name, None, [], "season relaxed (name kept)"),
-            (None, None, None, None, [], "unfiltered (all relaxed)"),
+            (season, position, min_minutes, [], "stat thresholds relaxed"),
+            (season, position, None, [], "min-minutes relaxed"),
+            (season, None, None, [], "position relaxed"),
+            (None, None, None, [], "unfiltered (all relaxed)"),
         ]
         seen = set()
-        for s, p, n, m, f, note in ladder:
-            key = (s, p, n, m, tuple(f))
+        for s, p, m, f, note in ladder:
+            key = (s, p, m, tuple(f))
             if key in seen:
                 continue
             seen.add(key)
-            hits = query_stats(query_vector, s, p, n, min_minutes=m, stat_filters=f, limit=limit)
+            hits = query_stats(query_vector, s, p, min_minutes=m, stat_filters=f, limit=limit)
             if hits:
                 return [_build_candidate(h) for h in hits], note
         return [], "no matches"
@@ -515,14 +531,14 @@ class ScoutIntelRAG(dspy.Module):
         self,
         query_str: str,
         season: str = None,
-        position: str = None,
-        player_name: str = None,
-        min_minutes: float = None,
-        scouting_for: str = None,
     ) -> Dict[str, Any]:
         """
         Retrieves tactical theory + candidate players, enriches each candidate
         with current manager and wage cost, and generates a grounded brief.
+
+        All query intent (position, player name, club to scout for) is inferred from
+        the query text during Phase 2 (Query Understanding). This ensures the system
+        works end-to-end with natural language only.
 
         If no players match, it does NOT ask the LLM to write a brief (which would
         invent ungrounded content) — it returns an explicit "no data" result.
@@ -565,7 +581,7 @@ class ScoutIntelRAG(dspy.Module):
 
         # Phase 2 — understand the query: extract position + stat intent
         t = time.perf_counter()
-        constraints = parse_query_constraints(query_str, position_hint=position)
+        constraints = parse_query_constraints(query_str)
         eff_position = constraints["position"]
         rank_by = constraints["rank_by"]
         stat_filters = list(constraints["stat_filters"])
@@ -575,19 +591,17 @@ class ScoutIntelRAG(dspy.Module):
         stat_filters.extend(
             [f"{k}>={v}" for k, v in tactical_filters.items()]
         )
-        # min_minutes precedence: explicit arg > parsed from query > season default.
-        if min_minutes is not None:
-            eff_min_minutes = min_minutes
-        elif constraints["min_minutes"] is not None:
+        # min_minutes: parsed from query OR season default
+        if constraints["min_minutes"] is not None:
             eff_min_minutes = float(constraints["min_minutes"])
         elif season in ("2024/2025", "2025/2026"):
             eff_min_minutes = 270.0  # ~3 full matches; cuts tiny-sample noise
         else:
             eff_min_minutes = None
         # Club you're scouting FOR — its own players are excluded from results.
-        # Explicit `scouting_for` wins; otherwise infer a club named in the query.
-        exclude_key = normalize_club(scouting_for) if scouting_for else detect_club(query_str)
-        exclude_display = scouting_for or (exclude_key.title() if exclude_key else None)
+        # Inferred from query text via detect_club(). No explicit parameter.
+        exclude_key = detect_club(query_str)
+        exclude_display = exclude_key.title() if exclude_key else None
         matched = list(constraints["matched"])
         if exclude_key:
             matched.append(f"excluding own club: {exclude_display}")
@@ -651,32 +665,31 @@ class ScoutIntelRAG(dspy.Module):
         t = time.perf_counter()
         is_career = is_career_query(query_str)
         collection_name = CAREER_COLLECTION if is_career else STATS_COLLECTION
+        search_type = "Career (3-year profiles)" if is_career else "Season-specific snapshot"
 
         if is_career:
             # Career query: no season-specific filtering
             raw_results, filter_note = self._retrieve_candidates_career(
                 query_vector,
                 eff_position,
-                player_name,
                 stat_filters,
                 limit=25,
             )
             pool = raw_results  # Career results don't have _build_candidate wrapping
-            retrieval_msg = f"Query vector + filters (position={eff_position}, name={player_name})"
+            retrieval_msg = f"Query vector + filters (position={eff_position})"
         else:
             # Season-specific query
             pool, filter_note = self._retrieve_candidates(
                 query_vector,
                 season,
                 eff_position,
-                player_name,
                 eff_min_minutes,
                 stat_filters,
                 limit=25,
             )
             retrieval_msg = (
                 f"Query vector + filters (season={season}, position={eff_position}, "
-                f"name={player_name}, min_minutes={eff_min_minutes}, "
+                f"min_minutes={eff_min_minutes}, "
                 f"stat_filters={stat_filters or '[]'}, exclude={exclude_display})"
             )
 
@@ -693,17 +706,20 @@ class ScoutIntelRAG(dspy.Module):
             input=retrieval_msg,
             output=f"{len(pool)} candidate(s) after filtering{excl_note}",
             why=(
-                "Milvus applies the scalar filters FIRST and computes cosine "
-                "similarity only on the rows that qualify. "
+                "Milvus hybrid search: scalar filters FIRST, then cosine on results. "
+                f"Route: {search_type} ({collection_name}). "
                 + (
-                    "Career aggregates span all seasons, so this retrieves 3-year profiles. "
+                    "Career aggregates span all seasons for trend analysis. "
                     if is_career
-                    else f"We then drop any players from the club you're scouting for. "
+                    else "Season-specific for current form analysis. "
+                    "Excludes players from the club you're scouting for. "
                 )
-                + f"Filters relax step-by-step if too strict; here: {filter_note}."
+                + f"Filters relax step-by-step if needed; applied: {filter_note}."
             ),
             count=len(pool),
             collection=collection_name,
+            search_route=search_type,
+            is_career_query=is_career,
         )
 
         # Phase 5 — rank by the requested stat columns (blend semantic + stats)
@@ -719,6 +735,9 @@ class ScoutIntelRAG(dspy.Module):
         for c in candidates:
             c["context_profile"] = _focused_profile(c, rank_columns)
         retrieval = {
+            "search_route": search_type,
+            "collection": collection_name,
+            "is_career_query": is_career,
             "filter_used": filter_note,
             "result_count": len(candidates),
             "pool_size": len(pool),
@@ -848,11 +867,50 @@ class ScoutIntelRAG(dspy.Module):
             ),
         )
 
-        # Build response with impact analysis for UI
+        # Build response with ALL 15 improvements for UI
+        # ============ IMPROVEMENT #1-2: Intent confidence & ambiguity ============
+        intent_confidence = confidence_score_intent(constraints)
+        ambiguity_warnings = rank_alternatives(query_str)
+
+        # ============ IMPROVEMENT #3: Filter relaxation ladder ============
+        filter_ladder = build_filter_relaxation_ladder(season, eff_position, eff_min_minutes, stat_filters)
+
+        # ============ IMPROVEMENT #4: Scalar vs vector balance ============
+        scalar_vector_balance = scalar_vs_vector_balance(
+            len(pool), len(candidates), 2000  # Approximate corpus size
+        )
+
+        # ============ IMPROVEMENT #5: Confidence bands for rankings ============
+        ranked_with_confidence = confidence_bands_for_rankings(candidates, rank_by)
+
+        # ============ IMPROVEMENT #6 & #7: Risk flags & comparison alternatives ============
+        candidates_with_enrichment = []
+        for c in candidates:
+            c["risk_flags"] = risk_flags_and_context(c)
+            c["similarity_breakdown"] = similarity_breakdown_by_dimension(c, rank_by)
+            c["explainability_ledger"] = explainability_ledger(c, tactical_concepts)
+            candidates_with_enrichment.append(c)
+
+        # ============ IMPROVEMENT #7: Comparison alternatives ============
+        comparison = (
+            comparison_alternatives(candidates[0], candidates + pool)
+            if candidates else {"top_pick": None, "cheaper_alternative": None, "breakthrough_prospect": None}
+        )
+
+        # ============ IMPROVEMENT #14: Player clustering ============
+        similar_players_by_candidate = {}
+        for c in candidates:
+            similar_players_by_candidate[c["player_name"]] = player_clustering_similar_players(
+                c, pool, limit=3
+            )
+
+        # ============ IMPROVEMENT #15: What-if analysis ============
+        what_if_scenarios = what_if_alternative_ranking(candidates, rank_by)
+
         response = {
             "scouting_brief": prediction.scouting_brief,
             "reasoning": getattr(prediction, "reasoning", ""),
-            "candidates": candidates,
+            "candidates": candidates_with_enrichment,
             "context_used": {
                 "tactical_theory": theory_hits,
                 "player_records": [c.get("context_profile") or c["stats_summary"] for c in candidates],
@@ -860,6 +918,25 @@ class ScoutIntelRAG(dspy.Module):
             "similarity_plot": similarity_plot,
             "retrieval": retrieval,
             "phases": phases,
+            # ============ ALL 15 IMPROVEMENTS ============
+            "explainability": {
+                # #1: Intent confidence
+                "intent_confidence": intent_confidence,
+                # #2: Ambiguity warnings
+                "query_ambiguities": ambiguity_warnings,
+                # #3: Filter relaxation ladder
+                "filter_relaxation_ladder": filter_ladder,
+                # #4: Scalar vs vector balance
+                "hybrid_search_balance": scalar_vector_balance,
+                # #5: Confidence bands
+                "ranking_confidence_bands": ranked_with_confidence,
+                # #6-7: Risk flags & comparison
+                "comparison_alternatives": comparison,
+                # #14: Similar players clustering
+                "player_clustering": similar_players_by_candidate,
+                # #15: What-if analysis
+                "what_if_scenarios": what_if_scenarios,
+            },
         }
 
         # Add impact analysis showing why these players were chosen

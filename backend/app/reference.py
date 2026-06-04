@@ -197,9 +197,39 @@ def get_manager(squad: Optional[str], season: Optional[str] = None) -> Optional[
 
 
 def _to_int_gbp(raw: str) -> Optional[int]:
-    """'525,000' / '27 300 000' -> 525000 / 27300000."""
-    digits = re.sub(r"[^\d]", "", raw)
-    return int(digits) if digits else None
+    """Parse currency to int: '525,000' / '27 300 000' / '4.3M' / '500K' -> int.
+
+    Handles commas, spaces, and M/K suffixes:
+    - '£4.3M' -> 4300000
+    - '£82,692' -> 82692
+    - '£500K' -> 500000
+    """
+    if not raw or not isinstance(raw, str):
+        return None
+
+    s = raw.strip().upper()
+
+    # Extract multiplier (M or K suffix)
+    multiplier = 1
+    if s.endswith("M"):
+        multiplier = 1_000_000
+        s = s[:-1]
+    elif s.endswith("K"):
+        multiplier = 1_000
+        s = s[:-1]
+
+    # Extract number (remove all non-digits except decimal point)
+    match = re.search(r"[\d.,]+", s)
+    if not match:
+        return None
+
+    # Replace commas/spaces with empty, then parse decimal
+    num_str = match.group(0).replace(",", "").replace(" ", "")
+    try:
+        num = float(num_str)
+        return int(num * multiplier)
+    except ValueError:
+        return None
 
 
 def format_gbp(amount: Optional[int]) -> Optional[str]:
@@ -211,10 +241,10 @@ def format_gbp(amount: Optional[int]) -> Optional[str]:
 def load_player_wages(path: str = WAGES_PATH) -> Dict[str, Dict[str, Optional[int]]]:
     """Load wages into ``name -> {weekly_gbp, annual_gbp}``.
 
-    Prefers the cleaned schema (``Weekly Wages (GBP)`` / ``Annual Wages (GBP)``
-    integer columns produced by ``backend.scripts.clean_csvs``). Falls back to the
-    original malformed format (unquoted commas inside ``£`` currency strings),
-    parsed line by line via regex, so it still works on an un-cleaned file.
+    Handles three formats:
+    1. Cleaned schema: ``Weekly Wages (GBP)`` / ``Annual Wages (GBP)`` (integer columns, non-empty)
+    2. Legacy format: ``Annual Wages`` / ``Weekly Wages`` columns with £ symbols and commas
+    3. Raw malformed CSV: pull two £ amounts per line via regex
     """
     wages: Dict[str, Dict[str, Optional[int]]] = {}
     if not os.path.exists(path):
@@ -223,33 +253,64 @@ def load_player_wages(path: str = WAGES_PATH) -> Dict[str, Dict[str, Optional[in
     with open(path, encoding="utf-8") as fh:
         reader = csv.reader(fh)
         header = next(reader, None) or []
+
+        # Try cleaned schema first (integer columns)
         clean = "Weekly Wages (GBP)" in header and "Annual Wages (GBP)" in header
         if clean:
             idx = {col: header.index(col) for col in header}
-            p_i = idx["Player"]
-            w_i = idx["Weekly Wages (GBP)"]
-            a_i = idx["Annual Wages (GBP)"]
+            p_i = idx.get("Player")
+            w_i = idx.get("Weekly Wages (GBP)")
+            a_i = idx.get("Annual Wages (GBP)")
+
+            # Check if the cleaned columns actually have data (not empty)
+            has_data = False
             for row in reader:
-                if len(row) <= a_i or not row[p_i].strip():
-                    continue
-                wages[row[p_i].strip().lower()] = {
-                    "weekly_gbp": _to_int_gbp(row[w_i]),
-                    "annual_gbp": _to_int_gbp(row[a_i]),
-                }
-        else:
-            # Legacy malformed file: pull the two £ amounts per raw line.
-            fh.seek(0)
-            next(fh, None)  # skip header
-            for line in fh:
-                parts = line.split(",")
-                if len(parts) < 3 or not parts[1].strip():
-                    continue
-                name = parts[1].strip()  # fbref names contain no commas
-                gbp = re.findall(r"£\s*([\d,\s]+?)\s*\(", line)
-                wages[name.lower()] = {
-                    "weekly_gbp": _to_int_gbp(gbp[0]) if len(gbp) >= 1 else None,
-                    "annual_gbp": _to_int_gbp(gbp[1]) if len(gbp) >= 2 else None,
-                }
+                if len(row) > max(w_i, a_i) and (row[w_i].strip() or row[a_i].strip()):
+                    has_data = True
+                    break
+
+            if has_data:
+                fh.seek(0)
+                next(fh, None)  # skip header
+                for row in reader:
+                    if len(row) > a_i and row[p_i].strip():
+                        wages[row[p_i].strip().lower()] = {
+                            "weekly_gbp": _to_int_gbp(row[w_i]) if row[w_i].strip() else None,
+                            "annual_gbp": _to_int_gbp(row[a_i]) if row[a_i].strip() else None,
+                        }
+                return wages  # Successfully used cleaned columns
+
+        # Try legacy format (Annual Wages / Weekly Wages with £ symbols)
+        if "Annual Wages" in header and "Weekly Wages" in header:
+            idx = {col: header.index(col) for col in header}
+            name_idx = idx.get("Name")
+            annual_idx = idx.get("Annual Wages")
+            weekly_idx = idx.get("Weekly Wages")
+
+            if name_idx is not None and annual_idx is not None and weekly_idx is not None:
+                fh.seek(0)
+                next(fh, None)  # skip header
+                for row in reader:
+                    if len(row) > max(name_idx, annual_idx, weekly_idx) and row[name_idx].strip():
+                        wages[row[name_idx].strip().lower()] = {
+                            "annual_gbp": _to_int_gbp(row[annual_idx]) if row[annual_idx].strip() else None,
+                            "weekly_gbp": _to_int_gbp(row[weekly_idx]) if row[weekly_idx].strip() else None,
+                        }
+                return wages  # Successfully used legacy format
+
+        # Final fallback: parse raw malformed CSV line by line
+        fh.seek(0)
+        next(fh, None)  # skip header
+        for line in fh:
+            parts = line.split(",")
+            if len(parts) < 3 or not parts[1].strip():
+                continue
+            name = parts[1].strip()  # fbref names contain no commas
+            gbp = re.findall(r"£\s*([\d,\s]+?)\s*\(", line)
+            wages[name.lower()] = {
+                "weekly_gbp": _to_int_gbp(gbp[0]) if len(gbp) >= 1 else None,
+                "annual_gbp": _to_int_gbp(gbp[1]) if len(gbp) >= 2 else None,
+            }
     return wages
 
 

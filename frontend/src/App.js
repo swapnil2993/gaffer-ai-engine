@@ -352,9 +352,7 @@ const TheoryCard = ({ t }) => (
 // ---------- main app ----------
 const App = () => {
   const [query, setQuery] = useState('Creative midfielder who excels in defensive transitions for a high press');
-  const [position, setPosition] = useState('MF');
-  const [playerName, setPlayerName] = useState('');
-  const [scoutingFor, setScoutingFor] = useState('');
+  const [season, setSeason] = useState('');
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState(null);
   const [error, setError] = useState(null);
@@ -373,9 +371,7 @@ const App = () => {
       const r = await axios.post(`${API}/query`, null, {
         params: {
           query_str: query,
-          position: position || undefined,
-          player_name: playerName || undefined,
-          scouting_for: scoutingFor || undefined,
+          season: season || undefined,
         },
       });
       setReport(r.data);
@@ -429,46 +425,24 @@ const App = () => {
         <div className="lg:col-span-4 space-y-6">
           <Card className="p-6">
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Search className="w-5 h-5 text-scout-gold" /> Tactical Query
+              <Search className="w-5 h-5 text-scout-gold" /> Query Understanding
             </h2>
             <textarea
               className="w-full bg-black/30 border border-white/10 rounded-lg p-3 text-sm focus:ring-2 focus:ring-scout-gold outline-none h-28 mb-4"
-              placeholder="Describe the player profile / tactical need…"
+              placeholder="Describe the player profile / tactical need (position, specific player, and club are inferred from query)…"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
             />
-            <div className="grid grid-cols-2 gap-3 mb-3">
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">Position</label>
-                <select className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm"
-                  value={position} onChange={(e) => setPosition(e.target.value)}>
-                  <option value="">Any</option>
-                  <option value="FW">Forward</option>
-                  <option value="MF">Midfielder</option>
-                  <option value="DF">Defender</option>
-                  <option value="GK">Goalkeeper</option>
-                </select>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3 mb-4">
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">Specific player (optional)</label>
-                <input
-                  className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm"
-                  placeholder="e.g. Lewis-Skelly"
-                  value={playerName}
-                  onChange={(e) => setPlayerName(e.target.value)}
-                />
-              </div>
-              <div>
-                <label className="text-xs text-gray-400 block mb-1">Scouting for — your club</label>
-                <input
-                  className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm"
-                  placeholder="e.g. Arsenal (excluded)"
-                  value={scoutingFor}
-                  onChange={(e) => setScoutingFor(e.target.value)}
-                />
-              </div>
+            <div className="mb-4">
+              <label className="text-xs text-gray-400 block mb-2">Season (optional override)</label>
+              <select className="w-full bg-black/30 border border-white/10 rounded p-2 text-sm"
+                value={season} onChange={(e) => setSeason(e.target.value)}>
+                <option value="">Latest available</option>
+                <option value="2023/2024">2023/2024</option>
+                <option value="2024/2025">2024/2025</option>
+                <option value="2025/2026">2025/2026</option>
+              </select>
+              <p className="text-[10px] text-gray-500 mt-1.5">Position, player name, and club are automatically inferred from the query during Phase 2.</p>
             </div>
             <button onClick={handleSearch} disabled={loading}
               className="w-full bg-scout-gold hover:bg-yellow-600 text-black font-bold py-3 rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-60">
@@ -478,15 +452,25 @@ const App = () => {
 
           {report?.retrieval && (
             <Card className="p-4 text-xs text-gray-400">
-              <div className="uppercase tracking-wider text-gray-500 mb-2">Retrieval</div>
-              <div>filter used: <span className="text-gray-200">{report.retrieval.filter_used}</span></div>
-              <div>candidates: <span className="text-gray-200">{report.retrieval.result_count}</span></div>
-              {report.retrieval.ranked_by?.length > 0 && (
-                <div>ranked by: <span className="text-gray-200">{report.retrieval.ranked_by.join(', ')}</span></div>
-              )}
-              {report.retrieval.excluded_club && (
-                <div>excluding own club: <span className="text-scout-gold">{report.retrieval.excluded_club}</span></div>
-              )}
+              <div className="uppercase tracking-wider text-gray-500 mb-3">Search Strategy</div>
+              <div className="space-y-2">
+                {report.retrieval.search_route && (
+                  <div>
+                    <span className="text-gray-500">route:</span>
+                    <Pill tone={report.retrieval.is_career_query ? 'gold' : 'gray'} className="ml-2">
+                      {report.retrieval.search_route}
+                    </Pill>
+                  </div>
+                )}
+                <div>filter used: <span className="text-gray-200">{report.retrieval.filter_used}</span></div>
+                <div>candidates: <span className="text-gray-200">{report.retrieval.result_count} / {report.retrieval.pool_size} pool</span></div>
+                {report.retrieval.ranked_by?.length > 0 && (
+                  <div>ranked by: <span className="text-gray-200">{report.retrieval.ranked_by.join(', ')}</span></div>
+                )}
+                {report.retrieval.excluded_club && (
+                  <div>excluding own club: <span className="text-scout-gold">{report.retrieval.excluded_club}</span></div>
+                )}
+              </div>
             </Card>
           )}
 
