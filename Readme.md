@@ -161,6 +161,10 @@ gaffer-ai-engine/
 
 ---
 
+### Diagram
+
+![Flow diagram](image.png)
+
 ## 📖 Full Documentation
 
 See the [docs/](docs/) directory for complete documentation.
