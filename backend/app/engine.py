@@ -1224,10 +1224,10 @@ class ScoutIntelRAG(dspy.Module):
             )
             return {
                 "scouting_brief": (
-                    "No player records matched this query. The stats database may "
-                    "be empty/unindexed, or the season/position/name filters matched "
-                    "nothing. Run `uv run python -m backend.scripts.index_data` to "
-                    "populate it, or broaden the filters."
+                    "No player records matched this query. The blended collection may "
+                    "be empty/unindexed, age filters may be too strict, or season/position/name filters "
+                    "matched nothing. Run `python backend/scripts/index_blended.py` to reindex, "
+                    "or broaden the filters (e.g., lower age threshold, remove position constraints)."
                 ),
                 "reasoning": "",
                 "candidates": [],
