@@ -527,7 +527,7 @@ def fetch_player_vectors(
     filter_expr = " and ".join(clauses) if clauses else "player_name != ''"
 
     raw = client.query(
-        collection_name=STATS_COLLECTION,
+        collection_name=BLENDED_COLLECTION,
         filter=filter_expr,
         limit=limit,
         output_fields=["player_name", "position", "squad", "season", "vector"],
