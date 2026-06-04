@@ -216,3 +216,23 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+
+# Frontend
+frontend/build/
+frontend/node_modules/
+node_modules/
+
+# OS specific
+.DS_Store
+
+# Local Database (Milvus Lite)
+scoutintel_local.db/
+
+# DeepEval
+.deepeval/
+
+# Local Settings
+.claude/settings.local.json
+.env
+.env.local

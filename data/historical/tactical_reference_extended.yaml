@@ -1,0 +1,338 @@
+tactical_systems:
+  pyramidal_formations:
+    display_name: "Pyramidal Formations (WM, 1920s-1930s)"
+    era: "1920s-1930s"
+    description: |
+      Herbert Chapman's defensive innovation. The WM Formation (2-3-5 → 3-2-2-3) introduced
+      the first systematic defense against the offside trap. This was the birth of modern
+      defensive structure, prioritizing defensive solidity over attacking flow.
+    key_managers: ["Herbert Chapman (Arsenal)"]
+    evolved_from: ["2-3-5 Pyramid"]
+    evolved_to: ["4-2-4 Soviet Style", "Italian Catenaccio"]
+    required_metrics:
+      tackles:
+        threshold: 0.80
+        meaning: "High defensive volume (defensive structure emphasis)"
+      clearances:
+        threshold: 0.85
+        meaning: "Direct clearances (not possession-based)"
+    player_profile: |
+      Pyramidal formation players are defenders first. No progressive passing required—
+      the job is to win the ball and clear it directly. High tackle and clearance numbers,
+      low passing completion expectations. This is low-block, direct football.
+    concept_keywords: ["pyramid", "chapman", "defensive structure", "wm formation"]
+
+  catenaccio:
+    display_name: "Catenaccio / Italian Defensive Lock (1950s-1980s)"
+    era: "1950s-1980s"
+    description: |
+      Helenio Herrera's defensive masterpiece. The libero (sweeper) behind the back line,
+      tight marking, and counter-attacking. Italy's World Cup-winning system. Catenaccio
+      prioritized defensive impermeability: concede zero, win 1-0.
+    key_managers: ["Helenio Herrera (Internazionale)", "Ferruccio Valcareggi (Italy)"]
+    evolved_from: ["Pyramidal Formations"]
+    evolved_to: ["German Libero Systems", "Modern Defensive Solidity"]
+    required_metrics:
+      tackles:
+        threshold: 0.75
+        meaning: "Tight marking and ball-winning"
+      interceptions:
+        threshold: 0.70
+        meaning: "Reading play ahead (libero responsibility)"
+      counter_attack_transitions:
+        threshold: 0.60
+        meaning: "Quick transitions to counter (Catenaccio is opportunistic)"
+    player_profile: |
+      Catenaccio players are positional geniuses. The libero (sweeper) reads the game
+      one step ahead, intercepting passes and covering fullback gaps. Attacking players
+      are limited to counter-attacks: high speed, direct passes. Modern equivalent:
+      a deep-lying playmaker who defends first, progresses on quick breaks.
+    concept_keywords: ["catenaccio", "libero", "sweeper", "counter", "herrera"]
+
+  total_football:
+    display_name: "Total Football / Gegenpressing (1970s)"
+    era: "1970s"
+    description: |
+      Rinus Michels and Ajax/Netherlands. Every player attacks and defends; positions
+      are fluid. When the ball is lost, immediate high pressing to regain it. The opposite
+      of Catenaccio: attack is the best defense. Requires intelligence, stamina, and
+      technical skill across the entire team.
+    key_managers: ["Rinus Michels (Ajax, Netherlands)", "Stefan Kovacs (Ajax)"]
+    evolved_from: ["Dutch Attacking Tradition"]
+    evolved_to: ["Tiki-taka", "Modern Gegenpressing"]
+    required_metrics:
+      pressing_success:
+        threshold: 0.70
+        meaning: "High-press recovery (immediate after loss)"
+      pass_completion:
+        threshold: 0.85
+        meaning: "Ball retention (fluid movement requires accurate passing)"
+      tackles_plus_interceptions:
+        threshold: 1.0
+        meaning: "Every player contributes to winning the ball back"
+    player_profile: |
+      Total Football players are complete. They press aggressively (0.70+ success), retain
+      possession (85%+ pass completion), and transition quickly. No passengers—every
+      midfielder tackles and passes; every defender progresses the ball. This is the
+      blueprint for Guardiola's gegenpressing midfielders.
+    concept_keywords: ["total football", "gegenpressing", "dutch", "fluid"]
+
+  tiki_taka:
+    display_name: "Tiki-taka / Possession (2000s-2010s)"
+    era: "2000s-2010s"
+    description: |
+      Guardiola's Barcelona evolution of Total Football. Possession is control; the
+      opponent is exhausted by chasing the ball. Short passes, positional movement, and
+      the false 9 (striker drops deep to create overloads). Won 14 trophies in 4 years.
+    key_managers: ["Pep Guardiola (Barcelona)", "Luis Enrique (Barcelona)"]
+    evolved_from: ["Total Football"]
+    evolved_to: ["Gegenpressing (Guardiola evolution)"]
+    required_metrics:
+      possession_pct:
+        threshold: 0.60
+        meaning: "Dominance through ball retention"
+      pass_completion:
+        threshold: 0.88
+        meaning: "High passing accuracy (short, precise passes)"
+      progressive_passes:
+        threshold: 0.70
+        meaning: "Advancing the ball despite possession dominance"
+      pressing_success:
+        threshold: 0.65
+        meaning: "Lower than pure gegenpressing but still active"
+    player_profile: |
+      Tiki-taka midfielders are technical artists. They move into space to receive, pass
+      first-time, and advance methodically. Stats: 88%+ pass completion, 4.0+ progressive
+      passes per 90, possession >60%. The false 9 (inverted forward) drops to 8-10 yards
+      deeper than usual, creating a numerical overload in midfield. Creative players
+      (assists >3/season) are essential.
+    concept_keywords: ["tiki-taka", "possession", "barcelona", "false 9", "guardiola"]
+
+  gegenpressing_modern:
+    display_name: "Gegenpressing / Modern High Press (2010s-present)"
+    era: "2010s-present"
+    description: |
+      Klopp's evolution: Total Football's pressing intensity + modern athleticism.
+      Win the ball in the opponent's half within 5 seconds. Immediate vertical passes
+      to exploit the chaos of the turnover. Liverpool's Champions League/Premier League
+      dominance. Requires elite physical conditioning and pressing discipline.
+    key_managers: ["Jürgen Klopp (Liverpool)", "Pep Guardiola (evolved)", "Marco Rose"]
+    evolved_from: ["Total Football", "Tiki-taka (high-press variant)"]
+    evolved_to: ["Hybrid Pressing Variants"]
+    required_metrics:
+      pressing_success:
+        threshold: 0.78
+        meaning: "High-intensity pressing (win ball in opp 3rd)"
+      tackles_att_3rd:
+        threshold: 0.75
+        meaning: "Aggression in opponent's third"
+      interceptions:
+        threshold: 0.65
+        meaning: "Reading play and stepping ahead"
+      counter_transition_speed:
+        threshold: 0.70
+        meaning: "Vertical pass speed after regain (within 3 seconds)"
+    player_profile: |
+      Gegenpressing midfielders are the modern ideal: elite pressing (0.78+ success),
+      high physical output (distance covered >11 km/90), plus ball progression (3+ prog
+      passes per 90). They press to win, then immediately play a vertical pass to exploit
+      space. Creative gegenpressers (assists >2/season) transition defense to attack
+      in <5 seconds. Examples: Kanté, Fabinho, Henderson.
+    concept_keywords: ["gegenpressing", "klopp", "high press", "liverpool", "modern"]
+
+  low_block_counter:
+    display_name: "Low Block / Counter-Attacking (1990s-present)"
+    era: "1990s-present"
+    description: |
+      Modern Catenaccio variant. Sit deep, compress the space, and hit on the break.
+      Mourinho's Chelsea (2004-05), Atlético Madrid under Simeone, Dyche's Everton.
+      Requires set-piece expertise and fast wingers for transitions.
+    key_managers: ["José Mourinho (Chelsea)", "Diego Simeone (Atlético)", "Sean Dyche"]
+    evolved_from: ["Catenaccio"]
+    evolved_to: ["Defensive Solidity Variants"]
+    required_metrics:
+      tackles:
+        threshold: 0.80
+        meaning: "High volume (defending deep)"
+      interceptions:
+        threshold: 0.75
+        meaning: "Reading passes in your own half"
+      clearances:
+        threshold: 0.80
+        meaning: "Direct clearances under pressure"
+      long_pass_accuracy:
+        threshold: 0.70
+        meaning: "Switching play quickly on the counter"
+    player_profile: |
+      Low-block midfielders work hard (distance >11 km/90) and are physically strong
+      (tackle success >70%). They sit deep, read the game, and distribute directly to
+      wings for counters. Stats: tackles >1.0/90, interceptions >0.75/90, long-pass
+      accuracy >70%. No possession requirement. Goal-threat wingers (assists >3/season)
+      are critical to exploit space left by attacking opponents.
+    concept_keywords: ["low block", "counter", "mourinho", "defensive", "direct"]
+
+  inverted_winger_fullback:
+    display_name: "Inverted Winger/Fullback (2010s-present)"
+    era: "2010s-present"
+    description: |
+      Modern fullback system where fullbacks (LB/RB) roam infield to create overloads.
+      Guardiola's Bayern and Manchester City, modern Liverpool. Fullbacks defend 1v1
+      on the wing, then immediately move centrally to press or pass. Hybrid wing-back.
+    key_managers: ["Pep Guardiola", "Jürgen Klopp", "Luis Enrique"]
+    evolved_from: ["Total Football positioning flexibility"]
+    evolved_to: ["Defensive variants with inverted fullbacks"]
+    required_metrics:
+      progressive_passes:
+        threshold: 0.65
+        meaning: "Advancing from fullback position"
+      progressive_carries:
+        threshold: 0.60
+        meaning: "Dribbling infield"
+      tackles_plus_interceptions:
+        threshold: 1.0
+        meaning: "Defensive 1v1 recovery"
+      assists:
+        threshold: 0.35
+        meaning: "Creating from inverted position"
+    player_profile: |
+      Inverted fullbacks are hybrid: defensive (1.0+ tackles+interceptions/90),
+      progressive (3+ progressive actions/90), and creative (2-3 assists/season).
+      They defend their flank, then move infield to create numerical overload in midfield.
+      Modern examples: Cancelo, Trent Alexander-Arnold. Elite versions maintain
+      85%+ pass completion while taking defensive risks.
+    concept_keywords: ["inverted fullback", "wing-back", "progressive", "hybrid"]
+
+  data_driven_recruitment:
+    display_name: "Data-Driven Scouting (2010s-present)"
+    era: "2010s-present"
+    description: |
+      Football Hackers thesis: metrics (xG, xA, packing, pressing success) reveal
+      underlying talent independent of luck. Teams like Liverpool (Moneyball), Brighton,
+      and Arsenal use expected metrics to find undervalued players. A striker with
+      12 xG and 8 goals is overperforming; expect regression. A striker with 18 xG
+      and 12 goals is underperforming; could improve.
+    key_managers: ["Jürgen Klopp (Liverpool data-driven)", "Graham Potter (Brighton)", "Mikel Arteta (Arsenal)"]
+    evolved_from: ["Statistical revolution (Moneyball baseball)"]
+    evolved_to: ["Advanced metrics (VAEP, Wyscout)"]
+    required_metrics:
+      expected_goals:
+        threshold: 0.50
+        meaning: "True finishing quality (xG > actual = underperformer)"
+      expected_assists:
+        threshold: 0.08
+        meaning: "True creativity independent of luck"
+      pressing_success:
+        threshold: 0.65
+        meaning: "Reproducible defensive metric"
+      shot_creating_actions:
+        threshold: 0.60
+        meaning: "Involvement in goals (deeper than just assists)"
+    player_profile: |
+      Data-driven recruitment focuses on underlying metrics (xG, xA, SCA) over raw
+      stats (G, A). A player with 5 goals and 8 xG is lucky; expect fewer next season.
+      A player with 3 goals and 8 xG is unlucky; expect improvement. This prevents
+      cognitive bias (outcome bias: won, so tactics were perfect) and finds undervalued
+      talent. Metrics like pressing success (0.65+) and shot-creating actions (0.60+)
+      are reproducible skills, not luck-dependent.
+    concept_keywords: ["data", "metrics", "xg", "xa", "expected", "moneyball"]
+
+manager_evolution:
+  herbert_chapman:
+    name: "Herbert Chapman"
+    era: "1920s-1930s"
+    systems: ["WM Formation / Pyramidal Formations"]
+    key_innovation: "Systematic defense; the libero concept origin"
+    legacy: "Father of modern defensive tactics"
+
+  helenio_herrera:
+    name: "Helenio Herrera"
+    era: "1950s-1970s"
+    systems: ["Catenaccio", "Italian Defensive Solidity"]
+    key_innovation: "The libero (sweeper) as playmaker; counter-attacking precision"
+    legacy: "Proved defense can be both beautiful and impenetrable"
+
+  rinus_michels:
+    name: "Rinus Michels"
+    era: "1960s-1980s"
+    systems: ["Total Football", "Gegenpressing"]
+    key_innovation: "Every player attacks and defends; fluid positioning"
+    legacy: "Blueprint for modern pressing systems; influenced Guardiola"
+
+  pep_guardiola:
+    name: "Pep Guardiola"
+    era: "2000s-present"
+    systems: ["Tiki-taka (Barcelona)", "Gegenpressing (Bayern/Manchester City)"]
+    key_innovation: "Synthesized Total Football + possession; false 9"
+    legacy: "Modern tactician; 14 trophies in 4 years; continuously evolving"
+
+  jurgen_klopp:
+    name: "Jürgen Klopp"
+    era: "2000s-present"
+    systems: ["Gegenpressing", "High-Press Counter"]
+    key_innovation: "Gegenpressing at scale; elite conditioning + discipline"
+    legacy: "Liverpool dominance; proof that gegenpressing wins at elite level"
+
+  diego_simeone:
+    name: "Diego Simeone"
+    era: "2000s-present"
+    systems: ["Low Block Counter", "Defensive Solidity + Set-Piece"]
+    key_innovation: "Catenaccio for modern era; defensive intensity + counters"
+    legacy: "Atlético Madrid's unlikely competitiveness vs elite teams"
+
+evolution_chains:
+  defensive_structure:
+    - "Pyramidal Formations (1920s)"
+    - "→ Catenaccio (1950s)"
+    - "→ German Libero Systems (1970s)"
+    - "→ Low Block Counter (1990s)"
+    - "→ Modern Defensive Solidity (2010s)"
+
+  pressing_intensity:
+    - "Pyramidal Formations (defensive only)"
+    - "→ Total Football (1970s, high-press)"
+    - "→ Tiki-taka (2000s, moderate press)"
+    - "→ Gegenpressing (2010s, elite press)"
+
+  possession_philosophy:
+    - "Direct football (1920s-1950s)"
+    - "→ Catenaccio counters (1950s)"
+    - "→ Total Football (1970s, fluid possession)"
+    - "→ Tiki-taka (2000s, possession dominance)"
+    - "→ Gegenpressing (2010s, smart possession + press)"
+
+case_studies:
+  barcelona_2009_2011:
+    title: "Barcelona 2009-2011: Tiki-taka Peak"
+    managers: ["Pep Guardiola"]
+    system: "Tiki-taka with false 9 (Messi inverted)"
+    key_metrics:
+      possession: 0.65
+      pass_completion: 0.90
+      pressing_success: 0.68
+      progressive_passes_per_90: 5.5
+    result: "Won La Liga 2x, Champions League 2x, Copa del Rey"
+    key_insight: "False 9 position created midfield overload; every player passed forward"
+
+  liverpool_2018_2020:
+    title: "Liverpool 2018-2020: Gegenpressing Elite"
+    managers: ["Jürgen Klopp"]
+    system: "Gegenpressing with inverted fullbacks"
+    key_metrics:
+      pressing_success: 0.78
+      tackles_att_3rd: 0.74
+      progressive_passes_per_90: 3.8
+      counter_transition_speed: 2.3  # seconds
+    result: "Won Champions League, Premier League, Club World Cup"
+    key_insight: "Gegenpressing at elite intensity; Salah/Mané exploit space from turnover"
+
+  atletico_madrid_2013_2014:
+    title: "Atlético Madrid 2013-2014: Low Block Resilience"
+    managers: ["Diego Simeone"]
+    system: "Low block + set-piece + counter"
+    key_metrics:
+      tackles: 0.95
+      interceptions: 0.80
+      clearances: 0.88
+      counter_transition_speed: 3.1
+    result: "Won La Liga; drew Champions League final (penalties)"
+    key_insight: "Defensive solidity + set-piece threat; defeated dominance through structure"

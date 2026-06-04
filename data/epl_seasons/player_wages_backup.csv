@@ -1,0 +1,528 @@
+Rk,Player,Nation,Pos,Squad,Age,Weekly Wages (GBP),Annual Wages (GBP)
+1,Erling Haaland,no NOR,FW,Manchester City,25,525000,27300000
+2,Mohamed Salah,eg EGY,MF,Liverpool,33,400000,20800000
+3,Casemiro,br BRA,MF,Manchester Utd,33,350000,18200000
+4,Virgil van Dijk,nl NED,DF,Liverpool,34,350000,18200000
+5,Bruno Fernandes,pt POR,MF,Manchester Utd,30,300000,15600000
+6,Bernardo Silva,pt POR,MF,Manchester City,30,300000,15600000
+7,Omar Marmoush,eg EGY,"FW,MF",Manchester City,26,295000,15340000
+8,Alexander Isak,se SWE,FW,Liverpool,25,280000,14560000
+9,Kai Havertz,de GER,"FW,MF",Arsenal,26,280000,14560000
+10,Gabriel Jesus,br BRA,FW,Arsenal,28,265000,13780000
+11,Marc Guéhi,eng ENG,DF,Manchester City,25,250000,13000000
+12,Cody Gakpo,nl NED,"MF,FW",Liverpool,26,250000,13000000
+13,Gianluigi Donnarumma,it ITA,GK,Manchester City,26,250000,13000000
+14,John Stones,eng ENG,DF,Manchester City,31,250000,13000000
+15,Rúben Dias,pt POR,DF,Manchester City,28,250000,13000000
+16,Reece James,eng ENG,"DF,MF",Chelsea,25,250000,13000000
+17,William Saliba,fr FRA,DF,Arsenal,24,250000,13000000
+18,Declan Rice,eng ENG,MF,Arsenal,26,240000,12480000
+19,Martin Ødegaard,no NOR,MF,Arsenal,26,240000,12480000
+20,Tijjani Reijnders,nl NED,MF,Manchester City,27,230000,11960000
+21,Phil Foden,eng ENG,MF,Manchester City,25,225000,11700000
+22,Rodri,es ESP,MF,Manchester City,29,220000,11440000
+23,Florian Wirtz,de GER,MF,Liverpool,22,200000,10400000
+24,Hugo Ekitike,fr FRA,FW,Liverpool,23,200000,10400000
+25,Joško Gvardiol,hr CRO,DF,Manchester City,23,200000,10400000
+26,Wesley Fofana,fr FRA,DF,Chelsea,24,200000,10400000
+27,Viktor Gyökeres,se SWE,FW,Arsenal,27,200000,10400000
+28,Matthijs de Ligt,nl NED,DF,Manchester Utd,25,195000,10140000
+29,Cristian Romero,ar ARG,DF,Tottenham Hotspur,27,195000,10140000
+30,Xavi Simons,nl NED,"MF,FW",Tottenham Hotspur,22,195000,10140000
+31,Bukayo Saka,eng ENG,"FW,MF",Arsenal,23,195000,10140000
+32,Harry Maguire,eng ENG,DF,Manchester Utd,32,190000,9880000
+33,Matheus Cunha,br BRA,"MF,FW",Manchester Utd,26,180000,9360000
+34,Rayan Cherki,fr FRA,MF,Manchester City,21,180000,9360000
+35,Enzo Fernández,ar ARG,MF,Chelsea,24,180000,9360000
+36,Eberechi Eze,eng ENG,"MF,FW",Arsenal,27,180000,9360000
+37,Gabriel Martinelli,br BRA,"FW,MF",Arsenal,24,180000,9360000
+38,Leandro Trossard,be BEL,"FW,MF",Arsenal,30,180000,9360000
+39,Marc Cucurella,es ESP,DF,Chelsea,27,175000,9100000
+40,James Maddison,eng ENG,"FW,MF",Tottenham Hotspur,28,170000,8840000
+41,Conor Gallagher,eng ENG,MF,Tottenham Hotspur,25,160000,8320000
+42,Benjamin Šeško,si SVN,FW,Manchester Utd,22,160000,8320000
+43,Andrew Robertson,sct SCO,DF,Liverpool,31,160000,8320000
+44,Bruno Guimarães,br BRA,MF,Newcastle United,27,160000,8320000
+45,Nathan Aké,nl NED,DF,Manchester City,30,160000,8320000
+46,Pedro Neto,pt POR,"MF,FW",Chelsea,25,160000,8320000
+47,Antoine Semenyo,gh GHA,"MF,FW",Manchester City,25,150000,7800000
+48,Bryan Mbeumo,cm CMR,"MF,FW",Manchester Utd,25,150000,7800000
+49,Luke Shaw,eng ENG,DF,Manchester Utd,30,150000,7800000
+50,Mason Mount,eng ENG,MF,Manchester Utd,26,150000,7800000
+51,Mohammed Kudus,gh GHA,"MF,FW",Tottenham Hotspur,24,150000,7800000
+52,Randal Kolo Muani,fr FRA,"FW,MF",Tottenham Hotspur,26,150000,7800000
+53,Jarrod Bowen,eng ENG,"MF,FW",West Ham United,28,150000,7800000
+54,Alexis Mac Allister,ar ARG,MF,Liverpool,26,150000,7800000
+55,Alisson,br BRA,GK,Liverpool,32,150000,7800000
+56,Federico Chiesa,it ITA,MF,Liverpool,27,150000,7800000
+57,Ryan Gravenberch,nl NED,MF,Liverpool,23,150000,7800000
+58,Boubacar Kamara,fr FRA,MF,Aston Villa,25,150000,7800000
+59,Emiliano Martínez,ar ARG,GK,Aston Villa,32,150000,7800000
+60,Morgan Rogers,eng ENG,MF,Aston Villa,23,150000,7800000
+61,Youri Tielemans,be BEL,MF,Aston Villa,28,150000,7800000
+62,Anthony Gordon,eng ENG,FW,Newcastle United,24,150000,7800000
+63,Joelinton,br BRA,MF,Newcastle United,28,150000,7800000
+64,Sandro Tonali,it ITA,MF,Newcastle United,25,150000,7800000
+66,Mateo Kovačić,hr CRO,MF,Manchester City,31,150000,7800000
+67,Moisés Caicedo,ec ECU,MF,Chelsea,23,150000,7800000
+68,Jordan Pickford,eng ENG,GK,Everton,31,150000,7800000
+69,Ben White,eng ENG,DF,Arsenal,27,150000,7800000
+70,Gabriel Magalhães,br BRA,DF,Arsenal,27,150000,7800000
+71,Noni Madueke,eng ENG,"FW,MF",Arsenal,23,150000,7800000
+72,Tammy Abraham,eng ENG,FW,Aston Villa,27,140000,7280000
+73,Dominic Solanke,eng ENG,FW,Tottenham Hotspur,27,140000,7280000
+74,Amadou Onana,be BEL,MF,Aston Villa,23,140000,7280000
+75,Donyell Malen,nl NED,"FW,MF",Aston Villa,26,140000,7280000
+76,Yoane Wissa,cd COD,FW,Newcastle United,28,140000,7280000
+77,João Palhinha,pt POR,MF,Tottenham Hotspur,30,135000,7020000
+78,Noussair Mazraoui,ma MAR,"DF,MF",Manchester Utd,27,135000,7020000
+79,Lucas Digne,fr FRA,DF,Aston Villa,32,135000,7020000
+80,Nick Woltemade,de GER,"FW,MF",Newcastle United,23,132500,6890000
+81,John McGinn,sct SCO,MF,Aston Villa,30,130000,6760000
+82,Ollie Watkins,eng ENG,FW,Aston Villa,29,130000,6760000
+83,Matheus Nunes,pt POR,DF,Manchester City,26,130000,6760000
+84,Cole Palmer,eng ENG,MF,Chelsea,23,130000,6760000
+85,Bernd Leno,de GER,GK,Fulham,33,130000,6760000
+86,Mikel Merino,es ESP,"MF,FW",Arsenal,29,130000,6760000
+87,João Pedro,br BRA,"FW,MF",Chelsea,23,125000,6500000
+88,Jørgen Strand Larsen,no NOR,FW,Crystal Palace,25,120000,6240000
+89,Leon Bailey,jm JAM,MF,Aston Villa,27,120000,6240000
+90,Samuel Chukwueze,ng NGA,MF,Fulham,26,120000,6240000
+91,Amad Diallo,ci CIV,MF,Manchester Utd,23,120000,6240000
+92,Lisandro Martínez,ar ARG,DF,Manchester Utd,27,120000,6240000
+93,Manuel Ugarte,uy URU,MF,Manchester Utd,24,120000,6240000
+94,Alphonse Areola,fr FRA,GK,West Ham United,32,120000,6240000
+95,Dominik Szoboszlai,hu HUN,"MF,DF",Liverpool,24,120000,6240000
+96,Victor Lindelöf,se SWE,"DF,MF",Aston Villa,31,120000,6240000
+97,Aaron Ramsdale,eng ENG,GK,Newcastle United,27,120000,6240000
+98,Jacob Ramsey,eng ENG,MF,Newcastle United,24,120000,6240000
+99,Kieran Trippier,eng ENG,DF,Newcastle United,34,120000,6240000
+100,Rayan Aït-Nouri,dz ALG,DF,Manchester City,24,120000,6240000
+101,Jorrel Hato,nl NED,DF,Chelsea,19,120000,6240000
+102,Tosin Adarabioyo,eng ENG,DF,Chelsea,27,120000,6240000
+103,Idrissa Gana Gueye,sn SEN,MF,Everton,35,120000,6240000
+104,James Tarkowski,eng ENG,DF,Everton,32,120000,6240000
+105,Jarrad Branthwaite,eng ENG,DF,Everton,23,120000,6240000
+106,Riccardo Calafiori,it ITA,DF,Arsenal,23,120000,6240000
+107,Leny Yoro,fr FRA,DF,Manchester Utd,19,115000,5980000
+108,James Ward-Prowse,eng ENG,MF,West Ham United,30,115000,5980000
+109,Brennan Johnson,wls WAL,"MF,FW",Crystal Palace,24,110000,5720000
+111,Tyrone Mings,eng ENG,DF,Aston Villa,32,110000,5720000
+112,Granit Xhaka,ch SUI,MF,Sunderland,32,110000,5720000
+113,Alejandro Garnacho,ar ARG,MF,Chelsea,21,110000,5720000
+114,Morgan Gibbs-White,eng ENG,MF,Nottingham Forest,25,110000,5720000
+115,Jamie Gittens,eng ENG,MF,Chelsea,20,108000,5616000
+116,Joshua Zirkzee,nl NED,"FW,MF",Manchester Utd,24,105000,5460000
+117,Daichi Kamada,jp JPN,MF,Crystal Palace,28,105000,5460000
+118,João Gomes,br BRA,MF,Wolves,24,105000,5460000
+119,Nikola Milenković,rs SRB,DF,Nottingham Forest,27,105000,5460000
+120,Dean Henderson,eng ENG,GK,Crystal Palace,28,100000,5200000
+121,Dominic Calvert-Lewin,eng ENG,FW,Leeds United,28,100000,5200000
+122,Max Kilman,eng ENG,DF,West Ham United,28,100000,5200000
+123,Jeremie Frimpong,nl NED,"DF,MF",Liverpool,24,100000,5200000
+124,Ian Maatsen,nl NED,DF,Aston Villa,23,100000,5200000
+125,Matty Cash,pl POL,DF,Aston Villa,27,100000,5200000
+126,Pau Torres,es ESP,DF,Aston Villa,28,100000,5200000
+127,Nordi Mukiele,fr FRA,DF,Sunderland,27,100000,5200000
+128,Anthony Elanga,se SWE,"FW,MF",Newcastle United,23,100000,5200000
+129,Levi Colwill,eng ENG,DF,Chelsea,22,100000,5200000
+130,Liam Delap,eng ENG,FW,Chelsea,22,100000,5200000
+132,Raúl Jiménez,mx MEX,FW,Fulham,34,100000,5200000
+133,David Raya,es ESP,GK,Arsenal,29,100000,5200000
+134,Pascal Groß,de GER,MF,Brighton,34,90000,4680000
+135,Micky van de Ven,nl NED,DF,Tottenham Hotspur,24,90000,4680000
+136,Richarlison,br BRA,"FW,MF",Tottenham Hotspur,28,90000,4680000
+137,Eddie Nketiah,eng ENG,MF,Crystal Palace,26,90000,4680000
+138,Jack Harrison,eng ENG,FW,Leeds United,28,90000,4680000
+139,Aaron Wan-Bissaka,cd COD,"DF,MF",West Ham United,27,90000,4680000
+140,Niclas Füllkrug,de GER,FW,West Ham United,32,90000,4680000
+141,Tomáš Souček,cz CZE,MF,West Ham United,30,90000,4680000
+142,Sven Botman,nl NED,DF,Newcastle United,25,90000,4680000
+143,Benoît Badiashile,fr FRA,DF,Chelsea,24,90000,4680000
+144,Kiernan Dewsbury-Hall,eng ENG,MF,Everton,26,90000,4680000
+145,Callum Hudson-Odoi,eng ENG,MF,Nottingham Forest,24,90000,4680000
+146,Chris Wood,nz NZL,FW,Nottingham Forest,33,90000,4680000
+147,Joachim Andersen,dk DEN,DF,Fulham,29,90000,4680000
+148,Jurriën Timber,nl NED,DF,Arsenal,24,90000,4680000
+149,Ferdi Kadioglu,tr TUR,"DF,MF",Brighton,25,87500,4550000
+150,Diogo Dalot,pt POR,"DF,MF",Manchester Utd,26,85000,4420000
+151,Pedro Porro,es ESP,DF,Tottenham Hotspur,25,85000,4420000
+152,Radu Drăgușin,ro ROU,DF,Tottenham Hotspur,23,85000,4420000
+153,Evanilson,br BRA,FW,Bournemouth,25,85000,4420000
+154,Giorgi Mamardashvili,ge GEO,GK,Liverpool,24,85000,4420000
+155,Joe Gomez,eng ENG,DF,Liverpool,28,85000,4420000
+156,Emmanuel Agbadou,ci CIV,DF,Wolves,28,85000,4420000
+157,Lutsharel Geertruida,nl NED,"DF,MF",Sunderland,25,85000,4420000
+158,Dan Ndoye,ch SUI,MF,Nottingham Forest,24,85000,4420000
+159,Ben Davies,wls WAL,DF,Tottenham Hotspur,32,80000,4160000
+160,Justin Kluivert,nl NED,MF,Bournemouth,26,80000,4160000
+161,Sean Longstaff,eng ENG,MF,Leeds United,27,80000,4160000
+162,Jean-Clair Todibo,fr FRA,DF,West Ham United,25,80000,4160000
+163,Toti Gomes,pt POR,DF,Wolves,26,80000,4160000
+164,Harvey Barnes,eng ENG,"FW,MF",Newcastle United,27,80000,4160000
+165,Joe Willock,eng ENG,MF,Newcastle United,25,80000,4160000
+166,Sávio,br BRA,MF,Manchester City,21,80000,4160000
+167,Kaoru Mitoma,jp JPN,"MF,FW",Brighton,28,80000,4160000
+168,Lewis Dunk,eng ENG,DF,Brighton,33,80000,4160000
+169,Michael Keane,eng ENG,DF,Everton,32,80000,4160000
+170,Alex Iwobi,ng NGA,MF,Fulham,29,80000,4160000
+171,Ethan Nwaneri,eng ENG,MF,Arsenal,18,80000,4160000
+172,Valentín Castellanos,ar ARG,FW,West Ham United,26,75000,3900000
+173,Tyrell Malacia,nl NED,DF,Manchester Utd,25,75000,3900000
+174,Archie Gray,eng ENG,"MF,DF",Tottenham Hotspur,19,75000,3900000
+175,Destiny Udogie,it ITA,"DF,MF",Tottenham Hotspur,22,75000,3900000
+176,Guglielmo Vicario,it ITA,GK,Tottenham Hotspur,28,75000,3900000
+177,Rodrigo Bentancur,uy URU,MF,Tottenham Hotspur,28,75000,3900000
+178,Daniel James,wls WAL,"FW,MF",Leeds United,27,75000,3900000
+179,Conor Bradley,nir NIR,DF,Liverpool,22,75000,3900000
+180,Milos Kerkez,hu HUN,DF,Liverpool,21,75000,3900000
+181,Emi Buendía,ar ARG,MF,Aston Villa,28,75000,3900000
+182,Ezri Konsa,eng ENG,DF,Aston Villa,27,75000,3900000
+183,Jean-Ricner Bellegarde,ht HAI,"MF,FW",Wolves,27,75000,3900000
+184,Tolu Arokodare,ng NGA,FW,Wolves,24,75000,3900000
+185,Enzo Le Fée,fr FRA,"MF,FW",Sunderland,25,75000,3900000
+186,Kyle Walker,eng ENG,"DF,MF",Burnley,35,75000,3900000
+187,Malick Thiaw,de GER,DF,Newcastle United,23,75000,3900000
+189,Nicolás González,es ESP,MF,Manchester City,23,75000,3900000
+190,Jordan Henderson,eng ENG,MF,Brentford,35,75000,3900000
+191,Mikkel Damsgaard,dk DEN,MF,Brentford,25,75000,3900000
+192,Georginio Rutter,fr FRA,"MF,FW",Brighton,23,75000,3900000
+193,Ibrahim Sangaré,ci CIV,MF,Nottingham Forest,27,75000,3900000
+194,Murillo,br BRA,DF,Nottingham Forest,23,75000,3900000
+195,Martín Zubimendi,es ESP,MF,Arsenal,26,75000,3900000
+196,Noah Okafor,ch SUI,"FW,MF",Leeds United,25,72500,3770000
+197,Adama Traoré,es ESP,"FW,MF",West Ham United,29,70000,3640000
+198,Pape Matar Sarr,sn SEN,MF,Tottenham Hotspur,22,70000,3640000
+200,Ismaila Sarr,sn SEN,MF,Crystal Palace,27,70000,3640000
+201,Jefferson Lerma,co COL,"MF,DF",Crystal Palace,30,70000,3640000
+202,Bafodé Diakité,fr FRA,DF,Bournemouth,24,70000,3640000
+203,Ryan Christie,sct SCO,MF,Bournemouth,30,70000,3640000
+204,Ibrahima Konaté,fr FRA,DF,Liverpool,26,70000,3640000
+205,Hwang Hee-chan,kr KOR,"FW,MF",Wolves,29,70000,3640000
+206,Marshall Munetsi,zw ZIM,"MF,FW",Wolves,29,70000,3640000
+207,Simon Adingra,ci CIV,"MF,FW",Sunderland,23,70000,3640000
+208,Dan Burn,eng ENG,DF,Newcastle United,33,70000,3640000
+209,Fabian Schär,ch SUI,DF,Newcastle United,33,70000,3640000
+210,Aaron Hickey,sct SCO,"DF,MF",Brentford,23,70000,3640000
+211,Reiss Nelson,eng ENG,"FW,MF",Brentford,25,70000,3640000
+212,Dilane Bakwa,fr FRA,MF,Nottingham Forest,22,70000,3640000
+213,Emile Smith Rowe,eng ENG,MF,Fulham,25,70000,3640000
+214,Issa Diop,ma MAR,DF,Fulham,28,70000,3640000
+215,Douglas Luiz,br BRA,MF,Aston Villa,27,67500,3510000
+216,Adam Armstrong,eng ENG,"FW,MF",Wolves,28,65000,3380000
+217,Matt O'Riley,dk DEN,MF,Brighton,24,65000,3380000
+218,Oscar Bobb,no NOR,MF,Fulham,22,65000,3380000
+219,Kevin Danso,at AUT,DF,Tottenham Hotspur,26,65000,3380000
+220,Marcus Tavernier,eng ENG,MF,Bournemouth,26,65000,3380000
+221,Harvey Elliott,eng ENG,MF,Aston Villa,22,65000,3380000
+222,Jackson Tchatchoua,cm CMR,"MF,DF",Wolves,23,65000,3380000
+223,Jhon Arias,co COL,"FW,MF",Wolves,27,65000,3380000
+224,Bertrand Traoré,bf BFA,"MF,FW",Sunderland,29,65000,3380000
+225,Omar Alderete,py PAR,DF,Sunderland,28,65000,3380000
+226,Dango Ouattara,bf BFA,MF,Brentford,23,65000,3380000
+227,Neco Williams,wls WAL,DF,Nottingham Forest,24,65000,3380000
+228,Kenny Tete,nl NED,DF,Fulham,29,65000,3380000
+229,Timothy Castagne,be BEL,"DF,MF",Fulham,29,65000,3380000
+230,Christian Nørgaard,dk DEN,MF,Arsenal,31,65000,3380000
+231,Piero Hincapié,ec ECU,DF,Arsenal,23,65000,3380000
+232,Saša Lukić,rs SRB,MF,Fulham,28,63000,3276000
+233,Senne Lammens,be BEL,GK,Manchester Utd,23,60000,3120000
+234,Lucas Bergvall,se SWE,MF,Tottenham Hotspur,19,60000,3120000
+235,Daniel Muñoz,co COL,MF,Crystal Palace,29,60000,3120000
+236,Will Hughes,eng ENG,MF,Crystal Palace,30,60000,3120000
+237,Yeremi Pino,es ESP,"MF,FW",Crystal Palace,22,60000,3120000
+238,Amine Adli,ma MAR,MF,Bournemouth,25,60000,3120000
+239,Đorđe Petrović,rs SRB,GK,Bournemouth,25,60000,3120000
+240,Lewis Cook,eng ENG,"MF,DF",Bournemouth,28,60000,3120000
+241,Tyler Adams,us USA,MF,Bournemouth,26,60000,3120000
+242,Mateus Fernandes,pt POR,MF,West Ham United,21,60000,3120000
+243,Ross Barkley,eng ENG,MF,Aston Villa,31,60000,3120000
+244,André,br BRA,MF,Wolves,24,60000,3120000
+245,José Sá,pt POR,GK,Wolves,32,60000,3120000
+246,Brian Brobbey,nl NED,FW,Sunderland,23,60000,3120000
+247,Nick Pope,eng ENG,GK,Newcastle United,33,60000,3120000
+249,Robert Sánchez,es ESP,GK,Chelsea,27,60000,3120000
+250,Danny Welbeck,eng ENG,FW,Brighton,34,60000,3120000
+251,James Milner,eng ENG,MF,Brighton,39,60000,3120000
+252,Mats Wieffer,nl NED,DF,Brighton,25,60000,3120000
+253,Olivier Boscagli,fr FRA,DF,Brighton,27,60000,3120000
+254,Beto,gw GNB,FW,Everton,27,60000,3120000
+255,Arnaud Kalimuendo,fr FRA,FW,Nottingham Forest,23,60000,3120000
+256,Ola Aina,ng NGA,DF,Nottingham Forest,28,60000,3120000
+257,Antonee Robinson,us USA,"DF,MF",Fulham,27,60000,3120000
+258,Rodrigo Muniz,br BRA,FW,Fulham,24,60000,3120000
+259,Kepa Arrizabalaga,es ESP,GK,Arsenal,30,60000,3120000
+260,Vitaliy Mykolenko,ua UKR,DF,Everton,26,58000,3016000
+261,André Onana,cm CMR,GK,Manchester Utd,29,57500,2990000
+262,Mathys Tel,fr FRA,"MF,FW",Tottenham Hotspur,20,55000,2860000
+263,Yves Bissouma,ml MLI,MF,Tottenham Hotspur,28,55000,2860000
+264,Chris Richards,us USA,DF,Crystal Palace,25,55000,2860000
+265,Kyle Walker-Peters,eng ENG,DF,West Ham United,28,55000,2860000
+266,Giovanni Leoni,it ITA,DF,Liverpool,18,55000,2860000
+267,Arthur Masuaku,cd COD,DF,Sunderland,31,55000,2860000
+268,Josh Cullen,ie IRL,MF,Burnley,29,55000,2860000
+269,Lesley Ugochukwu,fr FRA,MF,Burnley,21,55000,2860000
+270,Emil Krafth,se SWE,DF,Newcastle United,30,55000,2860000
+271,Caoimhín Kelleher,ie IRL,GK,Brentford,26,55000,2860000
+273,Maxim De Cuyper,be BEL,"DF,MF",Brighton,24,55000,2860000
+274,Séamus Coleman,ie IRL,DF,Everton,36,55000,2860000
+275,Omari Hutchinson,eng ENG,MF,Nottingham Forest,21,55000,2860000
+276,Harry Wilson,wls WAL,MF,Fulham,28,55000,2860000
+277,Sander Berge,no NOR,MF,Fulham,27,55000,2860000
+278,Cristhian Mosquera,es ESP,DF,Arsenal,21,55000,2860000
+280,Jean-Philippe Mateta,fr FRA,FW,Crystal Palace,28,50000,2600000
+281,Maxence Lacroix,fr FRA,DF,Crystal Palace,25,50000,2600000
+282,Nathaniel Clyne,eng ENG,"MF,DF",Crystal Palace,34,50000,2600000
+283,David Brooks,wls WAL,MF,Bournemouth,28,50000,2600000
+284,Marcos Senesi,ar ARG,DF,Bournemouth,28,50000,2600000
+285,Lucas Perri,br BRA,GK,Leeds United,27,50000,2600000
+286,Pascal Struijk,nl NED,DF,Leeds United,25,50000,2600000
+287,Callum Wilson,eng ENG,FW,West Ham United,33,50000,2600000
+288,Konstantinos Mavropanos,gr GRE,DF,West Ham United,27,50000,2600000
+289,Łukasz Fabiański,pl POL,GK,West Ham United,40,50000,2600000
+290,Curtis Jones,eng ENG,"MF,DF",Liverpool,24,50000,2600000
+291,Wataru Endo,jp JPN,DF,Liverpool,32,50000,2600000
+292,Matt Doherty,ie IRL,"DF,MF",Wolves,33,50000,2600000
+293,Sam Johnstone,eng ENG,GK,Wolves,32,50000,2600000
+294,Habib Diarra,sn SEN,MF,Sunderland,21,50000,2600000
+295,Reinildo Mandava,mz MOZ,DF,Sunderland,31,50000,2600000
+296,Marcus Edwards,eng ENG,"MF,FW",Burnley,26,50000,2600000
+297,Maxime Estève,fr FRA,DF,Burnley,23,50000,2600000
+298,Valentino Livramento,eng ENG,DF,Newcastle United,22,50000,2600000
+299,Abdukodir Khusanov,uz UZB,DF,Manchester City,21,50000,2600000
+300,James Trafford,eng ENG,GK,Manchester City,22,50000,2600000
+301,Jeremy Doku,be BEL,"MF,FW",Manchester City,23,50000,2600000
+302,Igor Thiago,br BRA,FW,Brentford,24,50000,2600000
+303,Keane Lewis-Potter,eng ENG,"DF,MF",Brentford,24,50000,2600000
+304,Mathias Jensen,dk DEN,MF,Brentford,29,50000,2600000
+305,Filip Jørgensen,dk DEN,GK,Chelsea,23,50000,2600000
+306,Marc Guiu,es ESP,FW,Chelsea,19,50000,2600000
+307,Trevoh Chalobah,eng ENG,DF,Chelsea,26,50000,2600000
+308,Brajan Gruda,de GER,MF,Brighton,21,50000,2600000
+309,Jan Paul van Hecke,nl NED,DF,Brighton,25,50000,2600000
+310,Joël Veltman,nl NED,DF,Brighton,33,50000,2600000
+311,Solly March,eng ENG,MF,Brighton,31,50000,2600000
+312,Igor Jesus,br BRA,FW,Nottingham Forest,24,50000,2600000
+313,Ryan Yates,eng ENG,MF,Nottingham Forest,27,50000,2600000
+314,Taiwo Awoniyi,ng NGA,FW,Nottingham Forest,27,50000,2600000
+315,Harrison Reed,eng ENG,MF,Fulham,30,50000,2600000
+316,Kevin,br BRA,MF,Fulham,22,50000,2600000
+318,Igor,br BRA,DF,Brighton,27,45000,2340000
+319,Stefan Ortega,de GER,GK,Nottingham Forest,32,45000,2340000
+320,Tom Heaton,eng ENG,GK,Manchester Utd,39,45000,2340000
+321,Anton Stach,de GER,MF,Leeds United,26,45000,2340000
+322,Brenden Aaronson,us USA,"MF,FW",Leeds United,24,45000,2340000
+323,Jaka Bijol,si SVN,DF,Leeds United,26,45000,2340000
+324,Sebastiaan Bornauw,be BEL,DF,Leeds United,26,45000,2340000
+325,Crysencio Summerville,nl NED,"MF,FW",West Ham United,23,45000,2340000
+326,Mads Hermansen,dk DEN,GK,West Ham United,25,45000,2340000
+327,Marco Bizot,nl NED,GK,Aston Villa,34,45000,2340000
+328,Ladislav Krejčí,cz CZE,"DF,MF",Wolves,26,45000,2340000
+329,Trai Hume,nir NIR,"DF,MF",Sunderland,23,45000,2340000
+330,Armando Broja,al ALB,FW,Burnley,23,45000,2340000
+331,Axel Tuanzebe,cd COD,DF,Burnley,27,45000,2340000
+332,Jacob Bruun Larsen,dk DEN,"MF,FW",Burnley,26,45000,2340000
+333,Jaidon Anthony,eng ENG,MF,Burnley,25,45000,2340000
+334,Loum Tchaouna,fr FRA,"MF,FW",Burnley,21,45000,2340000
+335,Quilindschy Hartman,nl NED,DF,Burnley,23,45000,2340000
+336,Lewis Hall,eng ENG,DF,Newcastle United,20,45000,2340000
+337,Malo Gusto,fr FRA,"DF,MF",Chelsea,22,45000,2340000
+338,Roméo Lavia,be BEL,MF,Chelsea,21,45000,2340000
+339,Iliman Ndiaye,sn SEN,MF,Everton,25,45000,2340000
+340,Thierno Barry,fr FRA,FW,Everton,22,45000,2340000
+341,Nicolò Savona,it ITA,DF,Nottingham Forest,22,45000,2340000
+342,Calvin Bassey,ng NGA,DF,Fulham,25,45000,2340000
+343,Ryan Sessegnon,eng ENG,"DF,MF",Fulham,25,45000,2340000
+344,Myles Lewis-Skelly,eng ENG,"MF,DF",Arsenal,18,45000,2340000
+346,Fraser Forster,eng ENG,GK,Bournemouth,37,40000,2080000
+347,Axel Disasi,fr FRA,DF,West Ham United,27,40000,2080000
+348,Patrick Dorgu,dk DEN,MF,Manchester Utd,20,40000,2080000
+349,Djed Spence,eng ENG,"DF,MF",Tottenham Hotspur,24,40000,2080000
+350,Wilson Odobert,fr FRA,"MF,FW",Tottenham Hotspur,20,40000,2080000
+351,Tyrick Mitchell,eng ENG,MF,Crystal Palace,25,40000,2080000
+352,Adam Smith,eng ENG,DF,Bournemouth,34,40000,2080000
+353,Alex Scott,eng ENG,MF,Bournemouth,21,40000,2080000
+354,Ethan Ampadu,wls WAL,MF,Leeds United,24,40000,2080000
+355,Gabriel Gudmundsson,se SWE,"DF,MF",Leeds United,26,40000,2080000
+356,Joe Rodon,wls WAL,DF,Leeds United,27,40000,2080000
+357,Joël Piroe,sr SUR,FW,Leeds United,25,40000,2080000
+358,Wilfried Gnonto,it ITA,FW,Leeds United,21,40000,2080000
+360,Ki-Jana Hoever,nl NED,"MF,DF",Wolves,23,40000,2080000
+361,Santiago Bueno,uy URU,DF,Wolves,26,40000,2080000
+362,Chemsdine Talbi,ma MAR,"MF,FW",Sunderland,20,40000,2080000
+363,Noah Sadiki,cd COD,MF,Sunderland,20,40000,2080000
+364,Bashir Humphreys,eng ENG,"DF,MF",Burnley,22,40000,2080000
+365,Florentino Luís,pt POR,MF,Burnley,25,40000,2080000
+366,Joe Worrall,eng ENG,DF,Burnley,28,40000,2080000
+367,Martin Dúbravka,sk SVK,GK,Burnley,36,40000,2080000
+369,Fabio Carvalho,pt POR,MF,Brentford,22,40000,2080000
+370,Frank Onyeka,ng NGA,MF,Brentford,27,40000,2080000
+371,Kristoffer Ajer,no NOR,DF,Brentford,27,40000,2080000
+372,Michael Kayode,it ITA,DF,Brentford,21,40000,2080000
+373,Dario Essugo,pt POR,MF,Chelsea,20,40000,2080000
+374,Gaga Slonina,us USA,GK,Chelsea,21,40000,2080000
+375,Charalampos Kostoulas,gr GRE,FW,Brighton,18,40000,2080000
+376,Yankuba Minteh,gm GAM,MF,Brighton,21,40000,2080000
+378,Elliot Anderson,eng ENG,MF,Nottingham Forest,22,40000,2080000
+379,James Mcatee,eng ENG,MF,Nottingham Forest,22,40000,2080000
+380,John,br BRA,GK,Nottingham Forest,29,40000,2080000
+381,Matz Sels,be BEL,GK,Nottingham Forest,33,40000,2080000
+382,Willy Boly,ci CIV,DF,Nottingham Forest,34,40000,2080000
+383,Evann Guessand,ci CIV,MF,Crystal Palace,24,37500,1950000
+384,Angel Gomes,eng ENG,"MF,FW",Wolves,24,35000,1820000
+385,Mamadou Sarr,sn SEN,DF,Chelsea,19,35000,1820000
+386,Luca Netz,de GER,"DF,MF",Nottingham Forest,22,35000,1820000
+387,Altay Bayındır,tr TUR,GK,Manchester Utd,27,35000,1820000
+388,Adam Wharton,eng ENG,MF,Crystal Palace,21,35000,1820000
+389,Borna Sosa,hr CRO,"DF,MF",Crystal Palace,27,35000,1820000
+390,Walter Benítez,ar ARG,GK,Crystal Palace,32,35000,1820000
+391,Adrien Truffert,fr FRA,DF,Bournemouth,23,35000,1820000
+393,Romain Faivre,fr FRA,MF,Bournemouth,27,35000,1820000
+394,James Justin,eng ENG,"DF,MF",Leeds United,27,35000,1820000
+395,Lukas Nmecha,de GER,FW,Leeds United,26,35000,1820000
+396,El Hadji Malick Diouf,sn SEN,"DF,MF",West Ham United,20,35000,1820000
+397,Soungoutou Magassa,fr FRA,MF,West Ham United,21,35000,1820000
+398,Chris Rigg,eng ENG,MF,Sunderland,18,35000,1820000
+399,Daniel Ballard,nir NIR,DF,Sunderland,25,35000,1820000
+400,Connor Roberts,wls WAL,"DF,MF",Burnley,29,35000,1820000
+401,Zeki Amdouni,ch SUI,"FW,MF",Burnley,24,35000,1820000
+402,Jacob Murphy,eng ENG,"FW,MF",Newcastle United,30,35000,1820000
+403,Marcus Bettinelli,eng ENG,GK,Manchester City,33,35000,1820000
+404,Rico Henry,jm JAM,DF,Brentford,28,35000,1820000
+405,Andrey Santos,br BRA,MF,Chelsea,21,35000,1820000
+406,Bart Verbruggen,nl NED,GK,Brighton,22,35000,1820000
+407,Jake O'Brien,ie IRL,DF,Everton,24,35000,1820000
+409,Jair Cunha,br BRA,DF,Nottingham Forest,20,35000,1820000
+410,Morato,br BRA,DF,Nottingham Forest,24,35000,1820000
+411,Nicolás Domínguez,ar ARG,MF,Nottingham Forest,27,35000,1820000
+412,Tom Cairney,sct SCO,MF,Fulham,34,35000,1820000
+413,Max Dowman,eng ENG,MF,Arsenal,15,35000,1820000
+414,Lorenzo Lucca,it ITA,FW,Nottingham Forest,24,30500,1586000
+415,Josh Dasilva,eng ENG,MF,Brentford,26,30000,1560000
+416,Antonín Kinský,cz CZE,GK,Tottenham Hotspur,22,30000,1560000
+417,Chadi Riad,ma MAR,DF,Crystal Palace,22,30000,1560000
+418,Christantus Uche,ng NGA,FW,Crystal Palace,22,30000,1560000
+420,Illan Meslier,fr FRA,GK,Leeds United,25,30000,1560000
+421,Jayden Bogle,eng ENG,"MF,DF",Leeds United,25,30000,1560000
+422,Karl Darlow,wls WAL,GK,Leeds United,34,30000,1560000
+423,Lamare Bogarde,nl NED,"MF,DF",Aston Villa,21,30000,1560000
+424,David Møller Wolfe,no NOR,"MF,DF",Wolves,23,30000,1560000
+425,Yerson Mosquera,co COL,DF,Wolves,24,30000,1560000
+426,Eliezer Mayenda,es ESP,"FW,MF",Sunderland,20,30000,1560000
+427,Robin Roefs,nl NED,GK,Sunderland,22,30000,1560000
+428,Mike Trésor,be BEL,"FW,MF",Burnley,26,30000,1560000
+429,Lewis Miley,eng ENG,"MF,DF",Newcastle United,19,30000,1560000
+431,Antoni Milambo,nl NED,MF,Brentford,20,30000,1560000
+432,Ethan Pinnock,jm JAM,DF,Brentford,32,30000,1560000
+433,Nathan Collins,ie IRL,DF,Brentford,24,30000,1560000
+434,Vitaly Janelt,de GER,MF,Brentford,27,30000,1560000
+435,James Garner,eng ENG,"MF,DF",Everton,24,30000,1560000
+436,Angus Gunn,sct SCO,GK,Nottingham Forest,29,30000,1560000
+437,Benjamin Lecomte,fr FRA,GK,Fulham,34,30000,1560000
+438,Nathan Patterson,sct SCO,DF,Everton,23,28000,1456000
+441,Pablo,br BRA,"MF,FW",West Ham United,21,25000,1300000
+442,Nilson Angulo,ec ECU,MF,Sunderland,22,25000,1300000
+443,Ayden Heaven,eng ENG,DF,Manchester Utd,18,25000,1300000
+444,Diego León,py PAR,DF,Manchester Utd,18,25000,1300000
+445,Kobbie Mainoo,eng ENG,MF,Manchester Utd,20,25000,1300000
+446,Tyler Fredricson,eng ENG,DF,Manchester Utd,20,25000,1300000
+447,Kōta Takai,jp JPN,DF,Tottenham Hotspur,20,25000,1300000
+448,Jaydee Canvot,fr FRA,DF,Crystal Palace,19,25000,1300000
+449,James Hill,eng ENG,DF,Bournemouth,23,25000,1300000
+450,Julian Araujo,mx MEX,DF,Bournemouth,23,25000,1300000
+451,Veljko Milosavljević,rs SRB,DF,Bournemouth,18,25000,1300000
+452,Ao Tanaka,jp JPN,MF,Leeds United,26,25000,1300000
+453,Sam Byram,eng ENG,"DF,MF",Leeds United,31,25000,1300000
+454,Freddie Woodman,eng ENG,GK,Liverpool,28,25000,1300000
+455,Rio Ngumoha,eng ENG,MF,Liverpool,16,25000,1300000
+456,Trey Nyoni,eng ENG,MF,Liverpool,18,25000,1300000
+458,Hugo Bueno,es ESP,"MF,DF",Wolves,22,25000,1300000
+459,Rodrigo Gomes,pt POR,"MF,FW",Wolves,22,25000,1300000
+460,Wilson Isidor,ht HAI,FW,Sunderland,24,25000,1300000
+461,Ashley Barnes,eng ENG,"FW,MF",Burnley,35,25000,1300000
+462,Hjalmar Ekdal,se SWE,DF,Burnley,26,25000,1300000
+464,Max Weiß,de GER,GK,Burnley,21,25000,1300000
+465,William Osula,dk DEN,FW,Newcastle United,21,25000,1300000
+466,Rico Lewis,eng ENG,DF,Manchester City,20,25000,1300000
+467,Gustavo Nunes,br BRA,MF,Brentford,19,25000,1300000
+469,Diego Coppola,it ITA,DF,Brighton,21,25000,1300000
+470,Diego Gómez,py PAR,"MF,FW",Brighton,22,25000,1300000
+471,Jack Hinshelwood,eng ENG,MF,Brighton,20,25000,1300000
+472,Adam Aznou,ma MAR,DF,Everton,19,25000,1300000
+473,Dwight McNeil,eng ENG,MF,Everton,25,25000,1300000
+474,Mark Travers,ie IRL,GK,Everton,26,25000,1300000
+475,Jonah Kusi-Asare,se SWE,FW,Fulham,18,25000,1300000
+476,Jorge Cuenca,es ESP,DF,Fulham,25,25000,1300000
+479,Justin Devenny,nir NIR,"MF,FW",Crystal Palace,21,20000,1040000
+480,Eli Junior Kroupi,fr FRA,"MF,FW",Bournemouth,19,20000,1040000
+481,Julio Soler,ar ARG,DF,Bournemouth,20,20000,1040000
+482,Oliver Scarles,eng ENG,"DF,MF",West Ham United,19,20000,1040000
+483,Daniel Bentley,eng ENG,GK,Wolves,32,20000,1040000
+484,Sasa Kalajdzic,at AUT,"FW,MF",Wolves,28,20000,1040000
+485,Anthony Patterson,eng ENG,GK,Sunderland,25,20000,1040000
+486,Dennis Cirkin,lv LVA,DF,Sunderland,23,20000,1040000
+488,Luke O'Nien,eng ENG,DF,Sunderland,30,20000,1040000
+489,Josh Laurent,eng ENG,"DF,MF",Burnley,30,20000,1040000
+491,Zian Flemming,nl NED,FW,Burnley,26,20000,1040000
+492,Sepp van den Berg,nl NED,DF,Brentford,23,20000,1040000
+493,Jason Steele,eng ENG,GK,Brighton,34,20000,1040000
+494,Stefanos Tzimas,gr GRE,FW,Brighton,19,20000,1040000
+495,Tom Watson,eng ENG,MF,Brighton,19,20000,1040000
+496,Carlos Alcaraz,ar ARG,MF,Everton,22,20000,1040000
+497,Tim Iroegbunam,eng ENG,MF,Everton,22,20000,1040000
+499,Álex Jiménez,es ESP,"DF,MF",Bournemouth,20,18000,936000
+500,Merlin Röhl,de GER,MF,Everton,23,15500,806000
+501,Pedro Lima,br BRA,MF,Wolves,19,15000,780000
+503,Brandon Austin,eng ENG,GK,Tottenham Hotspur,26,15000,780000
+504,Dane Scarlett,eng ENG,FW,Tottenham Hotspur,21,15000,780000
+505,Romain Esse,eng ENG,MF,Crystal Palace,20,15000,780000
+506,Enes Ünal,tr TUR,FW,Bournemouth,28,15000,780000
+507,Ilia Gruev,bg BUL,MF,Leeds United,25,15000,780000
+508,Freddie Potts,eng ENG,MF,West Ham United,21,15000,780000
+509,George Earthy,eng ENG,MF,West Ham United,20,15000,780000
+510,Andrés García,es ESP,DF,Aston Villa,22,15000,780000
+511,Samuel Iling-Junior,eng ENG,MF,Aston Villa,21,15000,780000
+513,Enso Gonzalez,py PAR,FW,Wolves,20,15000,780000
+515,Dan Neil,eng ENG,MF,Sunderland,23,15000,780000
+516,Simon Moore,eng ENG,GK,Sunderland,35,15000,780000
+519,John Ruddy,eng ENG,GK,Newcastle United,38,15000,780000
+520,Mark Gillespie,eng ENG,GK,Newcastle United,33,15000,780000
+521,Romelle Donovan,eng ENG,FW,Brentford,18,15000,780000
+522,Yunus Emre Konak,tr TUR,MF,Brentford,19,15000,780000
+524,Tom McGill,eng ENG,GK,Brighton,25,15000,780000
+525,Tom King,wls WAL,GK,Everton,30,15000,780000
+528,Christos Mandas,gr GRE,GK,Bournemouth,23,12500,650000
+529,Facundo Buonanotte,ar ARG,MF,Leeds United,20,12500,650000
+531,Remi Matthews,eng ENG,GK,Crystal Palace,31,12500,650000
+532,Carlos Baleba,cm CMR,MF,Brighton,21,12500,650000
+533,Zach Abbott,eng ENG,DF,Nottingham Forest,19,12500,650000
+534,Václav Hladký,cz CZE,GK,Burnley,35,12000,624000
+536,Melker Ellborg,,GK,Sunderland,22,10000,520000
+540,Alex Cairns,eng ENG,GK,Leeds United,33,10000,520000
+545,Leo Fuhr Hjelde,no NOR,DF,Sunderland,21,10000,520000
+546,Romaine Mundle,eng ENG,MF,Sunderland,22,10000,520000
+549,Ellery Balcombe,eng ENG,GK,Brentford,25,10000,520000
+550,Hákon Valdimarsson,is ISL,GK,Brentford,23,10000,520000
+551,Kevin Schade,de GER,"MF,FW",Brentford,23,10000,520000
+553,Eric da Silva Moreira,de GER,DF,Nottingham Forest,19,8000,416000
+556,Will Dennis,eng ENG,GK,Bournemouth,25,8000,416000
+561,Alex Murphy,ie IRL,DF,Newcastle United,21,8000,416000
+562,Benjamin Arthur,eng ENG,DF,Brentford,19,8000,416000
+563,Yasin Ayari,se SWE,MF,Brighton,21,8000,416000
+564,Tyrique George,eng ENG,MF,Everton,19,7500,390000
+569,Matthew Cox,eng ENG,GK,Brentford,22,7000,364000
+577,Joe Whitworth,,GK,Crystal Palace,21,5000,260000
+578,Rio Cardines,tt TRI,MF,Crystal Palace,19,5000,260000
+580,Joe Gauci,au AUS,GK,Aston Villa,24,5000,260000
+581,Harrison Jones,eng ENG,MF,Sunderland,20,5000,260000
+582,Milan Aleksić,rs SRB,FW,Sunderland,19,5000,260000
+585,Myles Peart-Harris,eng ENG,MF,Brentford,22,5000,260000
+600,Teddy Sharman-Lowe,,GK,Chelsea,22,3000,156000
+617,Harvey Davies,eng ENG,GK,Liverpool,22,2000,104000
+627,Alfie Pond,eng ENG,DF,Wolves,21,1500,78000
+629,Radek Vítek,,GK,Manchester Utd,21,1500,78000
+639,Elijah Campbell,eng ENG,DF,Everton,20,1000,52000
+642,Elyh Harrison,,GK,Manchester Utd,19,1000,52000
+646,Owen Goodman,ca CAN,GK,Crystal Palace,21,1000,52000
+656,Lyle Foster,za RSA,"FW,MF",Burnley,24,769,40000
+671,Danny Imray,eng ENG,"DF,MF",Crystal Palace,22,400,20800
